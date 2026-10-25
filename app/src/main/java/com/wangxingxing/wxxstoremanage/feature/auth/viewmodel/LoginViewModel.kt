@@ -2,7 +2,7 @@
  * author : 王星星
  * date : 2026-10-25 15:28
  * email : 1099420259@qq.com
- * description : 登录状态归约；提交中忽略重复点击，用户名去首尾空白，密码保持原样。
+ * description : 登录状态归约；进入页面回填记住的凭据，提交中忽略重复点击，用户名去首尾空白，密码保持原样。
  */
 package com.wangxingxing.wxxstoremanage.feature.auth.viewmodel
 
@@ -35,16 +35,39 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    private var hasUserEdited = false
+
+    init {
+        viewModelScope.launch {
+            val preference = authRepository.loadCredentialPreference()
+            val remembered = preference.credentials.takeIf { preference.rememberEnabled }
+            _uiState.update { state ->
+                // 本地读取可能晚于用户开始输入或提交，此时不能覆盖已经产生的内容。
+                if (hasUserEdited || state.submitState != SubmitState.Idle) {
+                    state
+                } else {
+                    state.copy(
+                        username = remembered?.username ?: state.username,
+                        password = remembered?.password ?: state.password,
+                        rememberCredentials = preference.rememberEnabled,
+                    )
+                }
+            }
+        }
+    }
+
     fun onAction(action: LoginAction) {
         when (action) {
             is LoginAction.UsernameChanged -> updateUsername(action.value)
             is LoginAction.PasswordChanged -> updatePassword(action.value)
             LoginAction.PasswordVisibilityToggled -> togglePasswordVisibility()
+            is LoginAction.RememberCredentialsChanged -> updateRememberCredentials(action.value)
             LoginAction.Submit -> submit()
         }
     }
 
     private fun updateUsername(value: String) {
+        hasUserEdited = true
         _uiState.update { state ->
             state.copy(
                 username = value,
@@ -55,6 +78,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun updatePassword(value: String) {
+        hasUserEdited = true
         _uiState.update { state ->
             state.copy(
                 password = value,
@@ -68,6 +92,10 @@ class LoginViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(passwordVisible = !state.passwordVisible)
         }
+    }
+
+    private fun updateRememberCredentials(value: Boolean) {
+        _uiState.update { state -> state.copy(rememberCredentials = value) }
     }
 
     private fun submit() {
@@ -105,6 +133,7 @@ class LoginViewModel @Inject constructor(
         }
         // 提交期间允许用户继续编辑输入框没有意义，Screen 会禁用；这里捕获本次提交的实际值。
         val password = currentState.password
+        val rememberCredentials = currentState.rememberCredentials
 
         viewModelScope.launch {
             logger.log(
@@ -114,7 +143,13 @@ class LoginViewModel @Inject constructor(
                     phase = AppLogPhase.Start,
                 ),
             )
-            when (val result = authRepository.login(trimmedUsername, password)) {
+            when (
+                val result = authRepository.login(
+                    username = trimmedUsername,
+                    password = password,
+                    rememberCredentials = rememberCredentials,
+                )
+            ) {
                 is AppResult.Success -> {
                     // 登录成功不发送导航事件；SessionGate 观察会话变化后切换根级页面。
                     _uiState.update { state -> state.copy(submitState = SubmitState.Success) }

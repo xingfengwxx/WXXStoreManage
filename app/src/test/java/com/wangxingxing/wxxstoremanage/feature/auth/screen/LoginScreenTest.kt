@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -50,9 +51,29 @@ class LoginScreenTest {
         composeRule.onNodeWithText(string(R.string.login_subtitle)).assertIsDisplayed()
         composeRule.onNodeWithText(string(R.string.login_username_label)).assertIsDisplayed()
         composeRule.onNodeWithText(string(R.string.login_password_label)).assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.login_remember_credentials))
+            .assertIsDisplayed()
         composeRule.onNode(
             hasClickAction() and hasText(string(R.string.login_submit)),
         ).assertIsDisplayed()
+    }
+
+    @Test
+    fun `remember credentials checkbox dispatches toggle action`() {
+        val actions = mutableListOf<LoginAction>()
+        setContent(
+            state = LoginUiState(rememberCredentials = true),
+            onAction = { actions += it },
+        )
+
+        composeRule.onNode(
+            hasClickAction() and hasText(string(R.string.login_remember_credentials)),
+        ).assertIsOn().performClick()
+
+        assertEquals(
+            listOf<LoginAction>(LoginAction.RememberCredentialsChanged(false)),
+            actions,
+        )
     }
 
     @Test

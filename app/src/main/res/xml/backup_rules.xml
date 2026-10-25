@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   会话 DataStore 保存可重放凭据的密文，必须排除在备份之外；
-   密文离开本机后仍可被同机恢复，等同于泄露会话。
+   会话与记住的登录凭据都是可重放的敏感数据，必须排除在备份之外；
+   密文离开本机后仍可被同机恢复，等同于泄露会话或密码。
 -->
 <full-backup-content>
     <exclude domain="file" path="datastore/session_store.preferences_pb" />
+    <exclude domain="file" path="datastore/credential_store.preferences_pb" />
 </full-backup-content>

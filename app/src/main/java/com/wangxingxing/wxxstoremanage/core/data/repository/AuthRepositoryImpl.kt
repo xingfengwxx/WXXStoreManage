@@ -2,7 +2,7 @@
  * author : 王星星
  * date : 2026-10-25 15:28
  * email : 1099420259@qq.com
- * description : 玩Android 认证实现；登录成功必须拿到 Set-Cookie 才落盘，登出以清除本机会话为准。
+ * description : 玩Android 认证实现；登录成功必须拿到 Set-Cookie 才落盘并保存勾选的账号密码，登出以清除本机会话为准。
  */
 package com.wangxingxing.wxxstoremanage.core.data.repository
 
@@ -12,12 +12,15 @@ import com.wangxingxing.wxxstoremanage.core.common.AppLogEvent
 import com.wangxingxing.wxxstoremanage.core.common.AppLogPhase
 import com.wangxingxing.wxxstoremanage.core.common.AppLogger
 import com.wangxingxing.wxxstoremanage.core.common.AppResult
+import com.wangxingxing.wxxstoremanage.core.data.credential.CredentialStore
 import com.wangxingxing.wxxstoremanage.core.data.mapper.loginBusinessError
 import com.wangxingxing.wxxstoremanage.core.data.mapper.toCurrentUser
 import com.wangxingxing.wxxstoremanage.core.data.mapper.toLoginAppError
 import com.wangxingxing.wxxstoremanage.core.data.mapper.toStoredSession
 import com.wangxingxing.wxxstoremanage.core.data.session.SessionStore
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
 import com.wangxingxing.wxxstoremanage.core.model.CurrentUser
+import com.wangxingxing.wxxstoremanage.core.model.RememberedCredentials
 import com.wangxingxing.wxxstoremanage.core.network.api.WanAndroidAuthApi
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -29,13 +32,36 @@ import retrofit2.HttpException
 class AuthRepositoryImpl @Inject constructor(
     private val api: WanAndroidAuthApi,
     private val sessionStore: SessionStore,
+    private val credentialStore: CredentialStore,
     private val logger: AppLogger,
 ) : AuthRepository {
 
     override val session: Flow<CurrentUser?> = sessionStore.session
         .map { storedSession -> storedSession?.toCurrentUser() }
 
-    override suspend fun login(username: String, password: String): AppResult<CurrentUser> {
+    override suspend fun loadCredentialPreference(): CredentialPreference {
+        val startedAt = System.nanoTime()
+        return try {
+            credentialStore.read()
+        } catch (cancellation: CancellationException) {
+            logCancel(ACTION_LOAD_CREDENTIAL_PREFERENCE, startedAt)
+            throw cancellation
+        } catch (throwable: Throwable) {
+            failure(
+                ACTION_LOAD_CREDENTIAL_PREFERENCE,
+                AppError(AppErrorType.Unknown, cause = throwable),
+                startedAt,
+                mapOf("reason" to "readCredentialsFailed"),
+            )
+            CredentialPreference(credentials = null, rememberEnabled = false)
+        }
+    }
+
+    override suspend fun login(
+        username: String,
+        password: String,
+        rememberCredentials: Boolean,
+    ): AppResult<CurrentUser> {
         val startedAt = System.nanoTime()
         logPhase(ACTION_LOGIN, AppLogPhase.Start)
 
@@ -94,6 +120,8 @@ class AuthRepositoryImpl @Inject constructor(
                 mapOf("reason" to "saveSessionFailed"),
             )
         }
+
+        persistRememberedCredentials(username, password, rememberCredentials)
 
         logger.log(
             AppLogEvent(
@@ -200,6 +228,37 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun persistRememberedCredentials(
+        username: String,
+        password: String,
+        remember: Boolean,
+    ) {
+        try {
+            if (remember) {
+                credentialStore.save(
+                    RememberedCredentials(username = username, password = password),
+                )
+            } else {
+                credentialStore.clear()
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (throwable: Throwable) {
+            // 凭据落盘失败不能让已建立的会话失败，下次登录重新输入即可。
+            logger.log(
+                AppLogEvent(
+                    feature = FEATURE,
+                    action = ACTION_LOGIN,
+                    phase = AppLogPhase.Failure,
+                    context = mapOf(
+                        "reason" to if (remember) "saveCredentialsFailed" else "clearCredentialsFailed",
+                    ),
+                    throwable = throwable,
+                ),
+            )
+        }
+    }
+
     private fun failure(
         action: String,
         error: AppError,
@@ -260,6 +319,7 @@ class AuthRepositoryImpl @Inject constructor(
         const val FEATURE = "auth"
         const val ACTION_LOGIN = "login"
         const val ACTION_LOGOUT = "logout"
+        const val ACTION_LOAD_CREDENTIAL_PREFERENCE = "loadCredentialPreference"
         const val SUCCESS_CODE = 0
         const val JSESSIONID_PREFIX = "JSESSIONID="
         const val NANOS_PER_MILLI = 1_000_000

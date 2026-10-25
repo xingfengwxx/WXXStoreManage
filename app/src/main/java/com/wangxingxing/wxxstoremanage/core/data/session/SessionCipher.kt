@@ -2,7 +2,7 @@
  * author : 王星星
  * date : 2026-10-25 15:28
  * email : 1099420259@qq.com
- * description : 会话密文加解密；密钥存放在 AndroidKeyStore，密文格式为 Base64(IV) + "." + Base64(密文+Tag)。
+ * description : 敏感载荷密文加解密（会话与记住的登录凭据）；密钥存放在 AndroidKeyStore，密文格式为 Base64(IV) + "." + Base64(密文+Tag)。
  */
 package com.wangxingxing.wxxstoremanage.core.data.session
 

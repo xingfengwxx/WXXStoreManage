@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   云备份与设备迁移都必须排除会话 DataStore，避免会话密文离开本机。
+   云备份与设备迁移都必须排除会话与登录凭据 DataStore，避免敏感密文离开本机。
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/session_store.preferences_pb" />
+        <exclude domain="file" path="datastore/credential_store.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/session_store.preferences_pb" />
+        <exclude domain="file" path="datastore/credential_store.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

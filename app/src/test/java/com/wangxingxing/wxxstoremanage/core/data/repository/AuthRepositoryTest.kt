@@ -2,7 +2,7 @@
  * author : 王星星
  * date : 2026-10-25 15:28
  * email : 1099420259@qq.com
- * description : 用 MockWebServer 覆盖登录成功、业务错误码、缺失 Cookie、HTTP 失败、网络异常与登出清理。
+ * description : 用 MockWebServer 覆盖登录成功、业务错误码、缺失 Cookie、HTTP 失败、网络异常、记住凭据与登出清理。
  */
 package com.wangxingxing.wxxstoremanage.core.data.repository
 
@@ -12,8 +12,11 @@ import com.wangxingxing.wxxstoremanage.core.common.AppErrorType
 import com.wangxingxing.wxxstoremanage.core.common.AppLogEvent
 import com.wangxingxing.wxxstoremanage.core.common.AppLogger
 import com.wangxingxing.wxxstoremanage.core.common.AppResult
+import com.wangxingxing.wxxstoremanage.core.data.credential.CredentialStore
 import com.wangxingxing.wxxstoremanage.core.data.session.SessionStore
 import com.wangxingxing.wxxstoremanage.core.data.session.StoredSession
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
+import com.wangxingxing.wxxstoremanage.core.model.RememberedCredentials
 import com.wangxingxing.wxxstoremanage.core.network.api.WanAndroidAuthApi
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +41,7 @@ class AuthRepositoryTest {
 
     private lateinit var server: MockWebServer
     private lateinit var sessionStore: FakeSessionStore
+    private lateinit var credentialStore: FakeCredentialStore
     private lateinit var repository: AuthRepositoryImpl
 
     @Before
@@ -45,6 +49,7 @@ class AuthRepositoryTest {
         server = MockWebServer()
         server.start()
         sessionStore = FakeSessionStore()
+        credentialStore = FakeCredentialStore()
         repository = createRepository(server)
     }
 
@@ -62,7 +67,7 @@ class AuthRepositoryTest {
             ),
         )
 
-        val result = repository.login("demo", "pass")
+        val result = repository.login("demo", "pass", rememberCredentials = false)
 
         assertTrue(result is AppResult.Success)
         val user = (result as AppResult.Success).data
@@ -83,16 +88,89 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun `login success remembers credentials when requested`() = runTest {
+        server.enqueue(
+            jsonResponse(
+                body = SUCCESS_BODY,
+                setCookie = "JSESSIONID=session-123; Path=/; HttpOnly",
+            ),
+        )
+
+        val result = repository.login("demo", " pass ", rememberCredentials = true)
+
+        assertTrue(result is AppResult.Success)
+        assertEquals(RememberedCredentials("demo", " pass "), credentialStore.stored)
+    }
+
+    @Test
+    fun `login success clears remembered credentials when not requested`() = runTest {
+        credentialStore.stored = RememberedCredentials("old", "old-pass")
+        server.enqueue(
+            jsonResponse(
+                body = SUCCESS_BODY,
+                setCookie = "JSESSIONID=session-123; Path=/; HttpOnly",
+            ),
+        )
+
+        val result = repository.login("demo", "pass", rememberCredentials = false)
+
+        assertTrue(result is AppResult.Success)
+        assertNull(credentialStore.stored)
+        assertFalse(credentialStore.rememberEnabled)
+        assertEquals(1, credentialStore.clearCount)
+    }
+
+    @Test
+    fun `credential save failure does not fail login`() = runTest {
+        credentialStore.failSave = true
+        server.enqueue(
+            jsonResponse(
+                body = SUCCESS_BODY,
+                setCookie = "JSESSIONID=session-123; Path=/; HttpOnly",
+            ),
+        )
+
+        val result = repository.login("demo", "pass", rememberCredentials = true)
+
+        assertTrue(result is AppResult.Success)
+        assertEquals("JSESSIONID=session-123", sessionStore.savedSession?.cookie)
+    }
+
+    @Test
+    fun `load credential preference returns stored value`() = runTest {
+        credentialStore.stored = RememberedCredentials("demo", "pass")
+
+        assertEquals(
+            CredentialPreference(
+                credentials = RememberedCredentials("demo", "pass"),
+                rememberEnabled = true,
+            ),
+            repository.loadCredentialPreference(),
+        )
+    }
+
+    @Test
+    fun `load credential preference does not remember when store fails`() = runTest {
+        credentialStore.failRead = true
+
+        assertEquals(
+            CredentialPreference(credentials = null, rememberEnabled = false),
+            repository.loadCredentialPreference(),
+        )
+    }
+
+    @Test
     fun `login maps -1 to authentication failed and saves nothing`() = runTest {
         server.enqueue(
             jsonResponse("""{"data":null,"errorCode":-1,"errorMsg":"账号密码不匹配！"}"""),
         )
 
-        val error = repository.login("demo", "wrong").errorOrNull()
+        val error = repository.login("demo", "wrong", rememberCredentials = true).errorOrNull()
 
         assertEquals(AppErrorType.AuthenticationFailed, error?.type)
         assertEquals("-1", error?.serverCode)
         assertNull(sessionStore.savedSession)
+        assertNull(credentialStore.stored)
     }
 
     @Test
@@ -101,7 +179,7 @@ class AuthRepositoryTest {
             jsonResponse("""{"data":null,"errorCode":-1001,"errorMsg":"登录已失效"}"""),
         )
 
-        val error = repository.login("demo", "pass").errorOrNull()
+        val error = repository.login("demo", "pass", rememberCredentials = false).errorOrNull()
 
         assertEquals(AppErrorType.SessionExpired, error?.type)
         assertEquals("-1001", error?.serverCode)
@@ -114,7 +192,7 @@ class AuthRepositoryTest {
             jsonResponse("""{"data":null,"errorCode":-2,"errorMsg":"未知业务错误"}"""),
         )
 
-        val error = repository.login("demo", "pass").errorOrNull()
+        val error = repository.login("demo", "pass", rememberCredentials = false).errorOrNull()
 
         assertEquals(AppErrorType.Unknown, error?.type)
         assertEquals("-2", error?.serverCode)
@@ -124,10 +202,11 @@ class AuthRepositoryTest {
     fun `login rejects success response without session cookie`() = runTest {
         server.enqueue(jsonResponse(SUCCESS_BODY))
 
-        val error = repository.login("demo", "pass").errorOrNull()
+        val error = repository.login("demo", "pass", rememberCredentials = true).errorOrNull()
 
         assertEquals(AppErrorType.Unknown, error?.type)
         assertNull(sessionStore.savedSession)
+        assertNull(credentialStore.stored)
     }
 
     @Test
@@ -140,7 +219,7 @@ class AuthRepositoryTest {
                 .build(),
         )
 
-        val error = repository.login("demo", "pass").errorOrNull()
+        val error = repository.login("demo", "pass", rememberCredentials = false).errorOrNull()
 
         assertEquals(AppErrorType.AuthenticationFailed, error?.type)
     }
@@ -155,7 +234,7 @@ class AuthRepositoryTest {
                 .build(),
         )
 
-        val error = repository.login("demo", "pass").errorOrNull()
+        val error = repository.login("demo", "pass", rememberCredentials = false).errorOrNull()
 
         assertEquals(AppErrorType.ServiceUnavailable, error?.type)
     }
@@ -167,7 +246,8 @@ class AuthRepositoryTest {
         val offlineRepository = createRepository(offlineServer)
         offlineServer.close()
 
-        val error = offlineRepository.login("demo", "pass").errorOrNull()
+        val error = offlineRepository.login("demo", "pass", rememberCredentials = false)
+            .errorOrNull()
 
         assertEquals(AppErrorType.NetworkUnavailable, error?.type)
     }
@@ -227,6 +307,7 @@ class AuthRepositoryTest {
         return AuthRepositoryImpl(
             api = retrofit.create(WanAndroidAuthApi::class.java),
             sessionStore = sessionStore,
+            credentialStore = credentialStore,
             logger = RecordingLogger(),
         )
     }
@@ -282,6 +363,38 @@ private class FakeSessionStore : SessionStore {
         }
         clearCount++
         state.value = null
+    }
+}
+
+private class FakeCredentialStore : CredentialStore {
+
+    var stored: RememberedCredentials? = null
+    var rememberEnabled = true
+    var saveCount = 0
+    var clearCount = 0
+    var failSave = false
+    var failRead = false
+
+    override suspend fun read(): CredentialPreference {
+        if (failRead) {
+            throw IOException("read failed")
+        }
+        return CredentialPreference(credentials = stored, rememberEnabled = rememberEnabled)
+    }
+
+    override suspend fun save(credentials: RememberedCredentials) {
+        if (failSave) {
+            throw IOException("save failed")
+        }
+        saveCount++
+        stored = credentials
+        rememberEnabled = true
+    }
+
+    override suspend fun clear() {
+        clearCount++
+        stored = null
+        rememberEnabled = false
     }
 }
 

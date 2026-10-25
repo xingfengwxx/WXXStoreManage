@@ -2,12 +2,13 @@
  * author : 王星星
  * date : 2026-10-25 15:28
  * email : 1099420259@qq.com
- * description : 登录页纯 UI；只渲染状态并转发动作，处理 IME inset、密码可见性与提交中禁用。
+ * description : 登录页纯 UI；只渲染状态并转发动作，处理 IME inset、密码可见性、记住凭据与提交中禁用。
  */
 package com.wangxingxing.wxxstoremanage.feature.auth.screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +19,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -145,6 +149,32 @@ internal fun LoginScreen(
                         onDone = { onAction(LoginAction.Submit) },
                     ),
                 )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .toggleable(
+                            value = state.rememberCredentials,
+                            enabled = !isSubmitting,
+                            role = Role.Checkbox,
+                            onValueChange = { checked ->
+                                onAction(LoginAction.RememberCredentialsChanged(checked))
+                            },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = state.rememberCredentials,
+                        onCheckedChange = null,
+                        enabled = !isSubmitting,
+                    )
+                    Text(
+                        text = stringResource(R.string.login_remember_credentials),
+                        modifier = Modifier.padding(start = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
 
                 if (submitError != null) {
                     Text(

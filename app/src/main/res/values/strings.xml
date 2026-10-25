@@ -31,6 +31,7 @@
     <string name="login_password_hide">隐藏</string>
     <string name="login_username_required">请输入账号</string>
     <string name="login_password_required">请输入密码</string>
+    <string name="login_remember_credentials">记住账号密码</string>
     <string name="login_submit">登录</string>
     <string name="login_submitting">登录中…</string>
 

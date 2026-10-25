@@ -22,6 +22,7 @@ import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
 import com.wangxingxing.wxxstoremanage.core.data.repository.StockRepository
 import com.wangxingxing.wxxstoremanage.core.data.repository.WarehouseRepository
 import com.wangxingxing.wxxstoremanage.core.data.session.SessionCleaner
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
 import com.wangxingxing.wxxstoremanage.core.model.CurrentUser
 import com.wangxingxing.wxxstoremanage.core.model.StockSummary
 import com.wangxingxing.wxxstoremanage.core.model.Warehouse
@@ -106,7 +107,14 @@ private class FakeAuthRepository : AuthRepository {
 
     var loginResult: AppResult<CurrentUser> = AppResult.Failure(AppError(AppErrorType.Unknown))
 
-    override suspend fun login(username: String, password: String): AppResult<CurrentUser> {
+    override suspend fun loadCredentialPreference(): CredentialPreference =
+        CredentialPreference(credentials = null, rememberEnabled = true)
+
+    override suspend fun login(
+        username: String,
+        password: String,
+        rememberCredentials: Boolean,
+    ): AppResult<CurrentUser> {
         val result = loginResult
         if (result is AppResult.Success) {
             sessionState.value = result.data

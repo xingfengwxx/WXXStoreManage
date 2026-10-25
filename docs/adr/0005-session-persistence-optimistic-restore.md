@@ -1,6 +1,6 @@
 # 会话持久化与乐观恢复
 
-状态：已接受（2026-10-25）
+状态：已接受（2026-10-25）；“不保存 password”的约束由 [ADR-0006](0006-remember-login-credentials.md) 修订。
 
 登录成功后必须把会话凭据与当前用户保存下来，否则杀进程重开就要重新登录。决定持久化真实会话：服务端下发的 Cookie 与 `id / username / displayName / email / avatarUrl` 放进同一个 `StoredSession`，用 Android Keystore 的 AES-GCM 整体加密，密文写入独立的 DataStore Preferences 文件；不保存 `token`、`password` 与 `admin`。启动时直接恢复并进入应用，不额外调用服务端校验；当前唯一的受保护调用是 logout，未来任何受保护接口返回 `errorCode == -1001` 时走统一清理并回登录页。
 

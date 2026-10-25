@@ -12,7 +12,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - 角色权限：Admin 拥有全部操作权限，并可作废单据、审核盘点、维护基础资料；Operator 只能创建与执行入库、出库、盘点录入，不能作废或审核。UI 隐藏无权限操作，服务端仍必须校验。
 - 单据状态：入库/出库为 `Draft → Pending → Completed / Cancelled`；盘点为 `Draft → Counting → PendingReview → Completed / Cancelled`。现存量只在 Completed 时变更（出库在 Pending 先占用锁定量），Completed 后不可编辑；作废不改变现存量，出库作废释放锁定量。
 - 明确非目标：离线写队列、批次/序列号/保质期、单位换算、供应商/采购/报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
-- 当前阶段：登录链路完成。Home / Inventory 已打通 Room 只读路径；Documents 为无业务数据的入口页；Profile 展示当前登录用户并支持退出登录。认证使用 WanAndroid 开放 API 作为可替换的临时认证源，由 `AuthRepository` 隔离。单据、同步与业务写操作尚未实现。
+- 当前阶段：登录链路完成，登录页支持记住账号密码（Keystore 加密保存，仅回填表单，不自动登录）。Home / Inventory 已打通 Room 只读路径；Documents 为无业务数据的入口页；Profile 展示当前登录用户并支持退出登录。认证使用 WanAndroid 开放 API 作为可替换的临时认证源，由 `AuthRepository` 隔离。单据、同步与业务写操作尚未实现。
 
 ## 2. 技术栈与版本策略
 
@@ -213,7 +213,7 @@ sealed interface InboundOrderDetailEffect {
 - 禁止裸 `Log.e(tag, "error")`。
 - 401 由 OkHttp `Authenticator` 单飞刷新；登出与刷新失败走同一清理路径：清会话、清 Room 业务数据、清返回栈并回到登录页，不在各 ViewModel 重复判断。
 - Room 必须导出 schema；release 禁止 `fallbackToDestructiveMigration`；结构变更必须提供 migration。
-- DataStore 默认存非敏感偏好（当前仓库、主题、筛选条件、最后同步时间）。
+- DataStore 默认存非敏感偏好（当前仓库、主题、筛选条件、最后同步时间）。会话与记住的登录凭据各自使用独立 DataStore 并以 Keystore 密文存储，两者的备份与设备迁移规则必须排除对应文件。
 
 ## 8. 导航
 
@@ -242,7 +242,7 @@ sealed interface InboundOrderDetailEffect {
 ## 10. 测试与验证
 
 - 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer（本地）、Robolectric + Compose UI Test（本地 UI）、Hilt Android Testing + Room Testing（设备）、Jacoco（本地覆盖率）、Compose Preview Screenshot Testing（`com.android.compose.screenshot` 插件）、GitHub Actions CI。
-- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片；LoginScreen 的 Robolectric 渲染与交互；设备侧 StockDao / CatalogDao 的 SQL 口径、外键级联与 upsert、AppDatabase v1 schema 校验、SessionGate 的登录失败与会话切换（Hilt `@BindValue` 替换数据层）；Login / Home / Inventory / Documents / Profile 五个页面在九种窗口尺寸、空态、错误态与 1.5 倍字体下的截图基准。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、记住凭据的保存/清除/失败降级与登录页回填、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片；LoginScreen 的 Robolectric 渲染与交互；设备侧 StockDao / CatalogDao 的 SQL 口径、外键级联与 upsert、AppDatabase v1 schema 校验、凭据密文落盘与清除、SessionGate 的登录失败与会话切换（Hilt `@BindValue` 替换数据层）；Login / Home / Inventory / Documents / Profile 五个页面在九种窗口尺寸、空态、错误态与 1.5 倍字体下的截图基准。
 - 未接入：ktlint、detekt。
 - 测试分层：
   - `src/test`：纯 JVM 单元测试与 Robolectric Compose 测试；Robolectric 的 `android-all-instrumented` 由 `:app:syncRobolectricDependencies` 预先同步到 `app/build/robolectric-deps`，测试进程不联网下载。
@@ -255,10 +255,10 @@ sealed interface InboundOrderDetailEffect {
 - 当前可用命令（2026-10-25 已实际执行）：
   - `./gradlew :app:assembleDebug`
   - `./gradlew :app:lintDebug`
-  - `./gradlew :app:testDebugUnitTest`（60 个用例）
+  - `./gradlew :app:testDebugUnitTest`（70 个用例）
   - `./gradlew :app:validateDebugScreenshotTest`（60 张基准图，本地 Layoutlib）
   - `./gradlew :app:updateDebugScreenshotTest`（有意变更 UI 后更新基准图）
-  - `./gradlew :app:connectedDebugAndroidTest`（14 个用例，需连接设备或模拟器）
+  - `./gradlew :app:connectedDebugAndroidTest`（16 个用例，需连接设备或模拟器）
   - `./gradlew :app:jacocoTestReport`（覆盖率报告：`app/build/reports/jacoco/jacocoTestReport`）
 - CI 配置为 `.github/workflows/ci.yml`：构建、Lint、单元测试与覆盖率在 Ubuntu 上执行，connectedDebugAndroidTest 在 CI 模拟器上执行；截图测试仅本地执行。该工作流已落盘但尚未在 GitHub Actions 实际运行，首次推送后需确认结果。新增门禁后必须在此更新命令与状态。
 - 交付必须给出实际执行过的命令与结果；未执行的检查写明原因，不得虚构通过。

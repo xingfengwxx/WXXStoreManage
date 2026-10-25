@@ -10,6 +10,7 @@ import com.wangxingxing.wxxstoremanage.core.common.AppError
 import com.wangxingxing.wxxstoremanage.core.common.AppErrorType
 import com.wangxingxing.wxxstoremanage.core.common.AppResult
 import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
 import com.wangxingxing.wxxstoremanage.core.model.CurrentUser
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
@@ -91,8 +92,14 @@ private class FakeAuthRepository(
 
     val logoutCalls = AtomicInteger(0)
 
-    override suspend fun login(username: String, password: String): AppResult<CurrentUser> =
-        AppResult.Failure(AppError(AppErrorType.Unknown))
+    override suspend fun loadCredentialPreference(): CredentialPreference =
+        CredentialPreference(credentials = null, rememberEnabled = true)
+
+    override suspend fun login(
+        username: String,
+        password: String,
+        rememberCredentials: Boolean,
+    ): AppResult<CurrentUser> = AppResult.Failure(AppError(AppErrorType.Unknown))
 
     override suspend fun logout(): AppResult<Unit> {
         logoutCalls.incrementAndGet()

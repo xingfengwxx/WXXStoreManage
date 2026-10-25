@@ -6,6 +6,8 @@
  */
 package com.wangxingxing.wxxstoremanage.core.data.di
 
+import com.wangxingxing.wxxstoremanage.core.data.credential.CredentialStore
+import com.wangxingxing.wxxstoremanage.core.data.credential.DataStoreCredentialStore
 import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
 import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepositoryImpl
 import com.wangxingxing.wxxstoremanage.core.data.repository.StockRepository
@@ -43,6 +45,10 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindSessionStore(impl: DataStoreSessionStore): SessionStore
+
+    @Binds
+    @Singleton
+    abstract fun bindCredentialStore(impl: DataStoreCredentialStore): CredentialStore
 
     @Binds
     @Singleton

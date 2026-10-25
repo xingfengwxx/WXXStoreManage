@@ -12,6 +12,7 @@ import com.wangxingxing.wxxstoremanage.core.common.AppLogPhase
 import com.wangxingxing.wxxstoremanage.core.common.AppLogger
 import com.wangxingxing.wxxstoremanage.core.common.AppResult
 import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
 import com.wangxingxing.wxxstoremanage.core.model.CurrentUser
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -90,8 +91,14 @@ private class FakeAuthRepository(
     override val session: Flow<CurrentUser?>,
 ) : AuthRepository {
 
-    override suspend fun login(username: String, password: String): AppResult<CurrentUser> =
-        AppResult.Success(demoUser)
+    override suspend fun loadCredentialPreference(): CredentialPreference =
+        CredentialPreference(credentials = null, rememberEnabled = true)
+
+    override suspend fun login(
+        username: String,
+        password: String,
+        rememberCredentials: Boolean,
+    ): AppResult<CurrentUser> = AppResult.Success(demoUser)
 
     override suspend fun logout(): AppResult<Unit> = AppResult.Success(Unit)
 }

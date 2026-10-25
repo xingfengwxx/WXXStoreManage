@@ -10,5 +10,6 @@ sealed interface LoginAction {
     data class UsernameChanged(val value: String) : LoginAction
     data class PasswordChanged(val value: String) : LoginAction
     data object PasswordVisibilityToggled : LoginAction
+    data class RememberCredentialsChanged(val value: Boolean) : LoginAction
     data object Submit : LoginAction
 }

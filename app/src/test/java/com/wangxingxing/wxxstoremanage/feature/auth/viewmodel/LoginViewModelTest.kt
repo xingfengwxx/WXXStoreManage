@@ -2,7 +2,7 @@
  * author : 王星星
  * date : 2026-10-25 15:34
  * email : 1099420259@qq.com
- * description : 覆盖登录页校验、用户名去空白、提交成功与失败、重复提交抑制及错误清理。
+ * description : 覆盖登录页凭据回填、校验、用户名去空白、提交成功与失败、重复提交抑制及错误清理。
  */
 package com.wangxingxing.wxxstoremanage.feature.auth.viewmodel
 
@@ -13,7 +13,9 @@ import com.wangxingxing.wxxstoremanage.core.common.AppLogPhase
 import com.wangxingxing.wxxstoremanage.core.common.AppLogger
 import com.wangxingxing.wxxstoremanage.core.common.AppResult
 import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
+import com.wangxingxing.wxxstoremanage.core.model.CredentialPreference
 import com.wangxingxing.wxxstoremanage.core.model.CurrentUser
+import com.wangxingxing.wxxstoremanage.core.model.RememberedCredentials
 import com.wangxingxing.wxxstoremanage.core.ui.SubmitState
 import com.wangxingxing.wxxstoremanage.feature.auth.model.LoginAction
 import com.wangxingxing.wxxstoremanage.feature.auth.model.LoginField
@@ -49,6 +51,64 @@ class LoginViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `remembered credentials prefill the form on start`() = runTest(dispatcher) {
+        val repository = FakeAuthRepository(
+            rememberedCredentials = RememberedCredentials("saved", "saved-pass"),
+        )
+        val viewModel = LoginViewModel(repository, RecordingLogger())
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("saved", state.username)
+        assertEquals("saved-pass", state.password)
+        assertTrue(state.rememberCredentials)
+    }
+
+    @Test
+    fun `remembered credentials do not overwrite user input`() = runTest(dispatcher) {
+        val repository = FakeAuthRepository(
+            rememberedCredentials = RememberedCredentials("saved", "saved-pass"),
+        )
+        val viewModel = LoginViewModel(repository, RecordingLogger())
+
+        viewModel.onAction(LoginAction.UsernameChanged("typed"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("typed", state.username)
+        assertEquals("", state.password)
+    }
+
+    @Test
+    fun `saved opt-out keeps the checkbox unchecked and skips prefill`() = runTest(dispatcher) {
+        val repository = FakeAuthRepository(rememberEnabled = false)
+        val viewModel = LoginViewModel(repository, RecordingLogger())
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.rememberCredentials)
+        assertEquals("", state.username)
+        assertEquals("", state.password)
+    }
+
+    @Test
+    fun `remember credentials toggle is forwarded to login`() = runTest(dispatcher) {
+        val repository = FakeAuthRepository()
+        val viewModel = LoginViewModel(repository, RecordingLogger())
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginAction.UsernameChanged("demo"))
+        viewModel.onAction(LoginAction.PasswordChanged("pass"))
+        viewModel.onAction(LoginAction.RememberCredentialsChanged(false))
+        viewModel.onAction(LoginAction.Submit)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.rememberCredentials)
+        assertEquals(false, repository.lastRememberCredentials)
+        assertEquals(SubmitState.Success, viewModel.uiState.value.submitState)
     }
 
     @Test
@@ -178,6 +238,8 @@ class LoginViewModelTest {
 private class FakeAuthRepository(
     private val loginResult: AppResult<CurrentUser> = AppResult.Success(demoUser),
     private val loginGate: CompletableDeferred<Unit>? = null,
+    private val rememberedCredentials: RememberedCredentials? = null,
+    private val rememberEnabled: Boolean = true,
 ) : AuthRepository {
 
     private val sessionState = MutableStateFlow<CurrentUser?>(null)
@@ -187,11 +249,23 @@ private class FakeAuthRepository(
     val loginCalls = AtomicInteger(0)
     var lastUsername: String? = null
     var lastPassword: String? = null
+    var lastRememberCredentials: Boolean? = null
 
-    override suspend fun login(username: String, password: String): AppResult<CurrentUser> {
+    override suspend fun loadCredentialPreference(): CredentialPreference =
+        CredentialPreference(
+            credentials = rememberedCredentials,
+            rememberEnabled = rememberEnabled,
+        )
+
+    override suspend fun login(
+        username: String,
+        password: String,
+        rememberCredentials: Boolean,
+    ): AppResult<CurrentUser> {
         loginCalls.incrementAndGet()
         lastUsername = username
         lastPassword = password
+        lastRememberCredentials = rememberCredentials
         loginGate?.await()
         return loginResult
     }
