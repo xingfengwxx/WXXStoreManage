@@ -241,7 +241,7 @@ sealed interface InboundOrderDetailEffect {
 ## 10. 测试与验证
 
 - 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer。
-- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片。
 - 未接入：Room in-memory、Hilt test、Compose UI 测试、Screenshot test。
 - 必须测试：ViewModel 状态转换（Loading → Content/Empty/Error、Submit 成功/失败、重试）、mapper、错误映射、DAO 与 migration、同步逻辑。
 - Compose UI 测试只覆盖关键路径：登录、入库提交、盘点审核。
