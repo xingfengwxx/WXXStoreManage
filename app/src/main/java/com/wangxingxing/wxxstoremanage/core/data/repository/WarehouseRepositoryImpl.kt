@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 从 WarehouseDao 读取启用仓库并映射为领域模型，读取在 IO 调度器执行。
+ */
 package com.wangxingxing.wxxstoremanage.core.data.repository
 
 import com.wangxingxing.wxxstoremanage.core.common.di.IoDispatcher

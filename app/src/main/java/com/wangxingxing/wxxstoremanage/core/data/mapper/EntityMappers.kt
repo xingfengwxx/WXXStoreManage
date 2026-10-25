@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 将 Room Entity 与聚合行映射为领域模型；转换细节仅保留在数据层。
+ */
 package com.wangxingxing.wxxstoremanage.core.data.mapper
 
 import com.wangxingxing.wxxstoremanage.core.database.dao.StockSummaryRow

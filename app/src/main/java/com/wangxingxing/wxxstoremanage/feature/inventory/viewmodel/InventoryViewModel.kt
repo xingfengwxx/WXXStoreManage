@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 观察库存汇总并归约页面状态；错误映射与日志在内部流处理，保证重试可重新订阅。
+ */
 package com.wangxingxing.wxxstoremanage.feature.inventory.viewmodel
 
 import androidx.lifecycle.ViewModel

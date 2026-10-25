@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 定义底部四个一级页的路由、标签与图标映射。
+ */
 package com.wangxingxing.wxxstoremanage.app
 
 import androidx.annotation.StringRes

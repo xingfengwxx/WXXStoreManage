@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 管理一级页选中态与各自的返回栈；注意只有一级页路由会写入 topLevelRouteState，读取时可安全转换为 AppRoute。
+ */
 package com.wangxingxing.wxxstoremanage.core.navigation
 
 import androidx.compose.runtime.Composable

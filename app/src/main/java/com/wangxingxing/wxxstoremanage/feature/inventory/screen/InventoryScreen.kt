@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 库存概览纯 UI，渲染 Loading、Empty、Error 与汇总指标；不读取 ViewModel，可独立 Preview。
+ */
 package com.wangxingxing.wxxstoremanage.feature.inventory.screen
 
 import androidx.compose.foundation.layout.Arrangement

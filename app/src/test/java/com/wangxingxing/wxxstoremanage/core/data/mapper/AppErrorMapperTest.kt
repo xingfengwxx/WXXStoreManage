@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 覆盖异常到 AppErrorType 的映射，包括 IO、HTTP 状态码、未知异常与取消重抛。
+ */
 package com.wangxingxing.wxxstoremanage.core.data.mapper
 
 import com.wangxingxing.wxxstoremanage.core.common.AppErrorType

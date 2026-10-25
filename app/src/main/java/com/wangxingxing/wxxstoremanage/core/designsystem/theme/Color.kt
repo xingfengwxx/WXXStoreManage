@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 固定品牌色与中性色板；不启用动态取色，保证品牌一致性。
+ */
 package com.wangxingxing.wxxstoremanage.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color

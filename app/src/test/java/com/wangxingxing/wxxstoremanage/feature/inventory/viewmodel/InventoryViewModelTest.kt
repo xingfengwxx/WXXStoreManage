@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 覆盖库存页 Loading、Empty、Content 与 Error 状态转换。
+ */
 package com.wangxingxing.wxxstoremanage.feature.inventory.viewmodel
 
 import app.cash.turbine.test

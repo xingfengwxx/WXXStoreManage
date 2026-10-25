@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : AppLogger 的 Logcat 实现；按阶段选择日志级别，禁止写入 token、密码和个人信息。
+ */
 package com.wangxingxing.wxxstoremanage.core.common
 
 import android.util.Log

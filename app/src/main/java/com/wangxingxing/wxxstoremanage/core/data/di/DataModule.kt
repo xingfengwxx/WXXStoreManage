@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 绑定仓库接口与实现，维持 feature 对抽象的数据访问依赖。
+ */
 package com.wangxingxing.wxxstoremanage.core.data.di
 
 import com.wangxingxing.wxxstoremanage.core.data.repository.StockRepository

@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 将 AppErrorType 映射为字符串资源，禁止向用户展示原始异常信息。
+ */
 package com.wangxingxing.wxxstoremanage.core.ui
 
 import androidx.annotation.StringRes

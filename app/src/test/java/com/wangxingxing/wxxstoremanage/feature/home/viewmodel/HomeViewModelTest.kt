@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 覆盖首页 Loading、Empty、Content、Error、失败日志与重试后的重新订阅。
+ */
 package com.wangxingxing.wxxstoremanage.feature.home.viewmodel
 
 import app.cash.turbine.test

@@ -57,6 +57,20 @@ com.wangxingxing.wxxstoremanage
 - 命名：`XxxRoute`、`XxxScreen`、`XxxViewModel`、`XxxUiState`、`XxxAction`、`XxxEffect`、`XxxUiModel`、`mapToXxxUiModel()`。
 - 方法与业务字段命名表达业务语义：`refreshInventory()`、`submitInboundOrder()`、`loadSkuDetail()`；禁止 `getData()`、`request()`、`flag` 这类命名。
 - 禁止 `Utils`、`CommonManager`、`BaseHelper` 这类模糊容器；确需复用时按职责命名并放入对应 core 包。
+- 所有手写 Kotlin 文件（含测试）必须在 `package` 声明前使用统一文件头；生成代码、Gradle 脚本与资源 XML 不适用：
+
+```kotlin
+/**
+ * author : 王星星
+ * date : yyyy-MM-dd HH:mm
+ * email : 1099420259@qq.com
+ * description : 文件职责、边界与需要特别注意的约束
+ */
+```
+
+- `date` 写入文件创建时的本地日期与 24 小时制时间，编辑或重命名不更新；新建文件使用当时时间。
+- `description` 使用中文，说明该文件的职责与边界；只有存在非显而易见的约束时才补充“注意：…”，不得只重复类名或包名。
+- 触碰到的旧 Kotlin 文件若缺少文件头，应在本次变更中补齐。
 
 ## 4. 标准阅读路径与页面模板
 
@@ -245,6 +259,7 @@ sealed interface InboundOrderDetailEffect {
 - 修改 Compose UI 时，保证 Screen 可独立 Preview，并优先将业务逻辑移出 Composable。
 - 交付报告包含：修改文件、行为变化、执行过的验证、未执行检查及原因。
 - 不得声称已通过尚未接入的检查或测试。
+- AI 新建或修改 Kotlin 文件时必须遵守第 3 节的文件头规则。
 - 术语变更同步更新 `GLOSSARY.md`；产生难回退决策时新增 ADR，而不是把原因埋进代码注释。
 
 ## 12. 文档维护

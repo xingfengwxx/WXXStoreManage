@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 覆盖库存现存量、锁定量与可用量的计算语义。
+ */
 package com.wangxingxing.wxxstoremanage.core.model
 
 import org.junit.Assert.assertEquals

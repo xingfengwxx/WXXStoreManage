@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 我的页纯 UI，当前展示未登录占位内容；不读取 ViewModel，可独立 Preview。
+ */
 package com.wangxingxing.wxxstoremanage.feature.profile.screen
 
 import androidx.compose.foundation.layout.Box

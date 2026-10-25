@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 唯一导航入口，提供 navigate、goBack、replaceTop；一级页切换标签，返回时回到起始一级页。
+ */
 package com.wangxingxing.wxxstoremanage.core.navigation
 
 class Navigator(

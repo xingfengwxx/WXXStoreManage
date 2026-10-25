@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 单 Activity 入口，启用 edge-to-edge 并挂载 Compose 主题与应用壳。
+ */
 package com.wangxingxing.wxxstoremanage.app
 
 import android.os.Bundle

@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 单据入口纯 UI 页面，当前展示空状态；可独立 Preview，不读取 ViewModel。
+ */
 package com.wangxingxing.wxxstoremanage.feature.documents.screen
 
 import androidx.compose.foundation.layout.Box

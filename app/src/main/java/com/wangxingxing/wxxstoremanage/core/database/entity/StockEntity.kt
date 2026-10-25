@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 库存表结构；以 skuId + warehouseId 为复合主键，外键级联删除并按仓库建索引。
+ */
 package com.wangxingxing.wxxstoremanage.core.database.entity
 
 import androidx.room.Entity

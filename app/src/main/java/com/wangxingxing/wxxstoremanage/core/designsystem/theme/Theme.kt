@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : Material 3 浅色与深色主题装配，统一应用配色与排版。
+ */
 package com.wangxingxing.wxxstoremanage.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme

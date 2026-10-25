@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 将异常映射为 AppError；注意 CancellationException 必须原样抛出，避免吞掉协程取消。
+ */
 package com.wangxingxing.wxxstoremanage.core.data.mapper
 
 import com.wangxingxing.wxxstoremanage.core.common.AppError

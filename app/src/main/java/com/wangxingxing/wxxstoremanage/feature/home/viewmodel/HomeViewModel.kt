@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 观察启用仓库并归约首页状态；注意 catch 必须位于 flatMapLatest 内部，否则错误后整条流结束、重试失效。
+ */
 package com.wangxingxing.wxxstoremanage.feature.home.viewmodel
 
 import androidx.lifecycle.ViewModel

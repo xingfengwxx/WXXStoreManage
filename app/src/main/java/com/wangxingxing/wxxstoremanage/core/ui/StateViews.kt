@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 通用加载、空状态与错误状态视图，供各页面复用。
+ */
 package com.wangxingxing.wxxstoremanage.core.ui
 
 import androidx.compose.foundation.layout.Arrangement

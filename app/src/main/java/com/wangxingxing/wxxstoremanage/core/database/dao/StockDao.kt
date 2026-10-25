@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 库存数据访问接口，提供汇总、按仓库观察与批量 upsert；汇总当前为全局口径。
+ */
 package com.wangxingxing.wxxstoremanage.core.database.dao
 
 import androidx.room.Dao

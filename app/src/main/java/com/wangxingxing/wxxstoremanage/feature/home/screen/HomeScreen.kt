@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 首页纯 UI，渲染 Loading、Empty、Error 与仓库列表；不读取 ViewModel，可独立 Preview。
+ */
 package com.wangxingxing.wxxstoremanage.feature.home.screen
 
 import androidx.compose.foundation.layout.Arrangement

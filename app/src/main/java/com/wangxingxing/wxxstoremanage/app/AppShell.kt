@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 应用壳：装配导航状态、底部一级页导航与 NavDisplay 路由注册。
+ */
 package com.wangxingxing.wxxstoremanage.app
 
 import androidx.compose.foundation.layout.fillMaxSize

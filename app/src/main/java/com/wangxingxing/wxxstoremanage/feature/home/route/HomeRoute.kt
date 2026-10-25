@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 首页路由键与 Route，负责收集状态并向 Screen 转发动作。
+ */
 package com.wangxingxing.wxxstoremanage.feature.home.route
 
 import androidx.compose.runtime.Composable

@@ -1,3 +1,9 @@
+/**
+ * author : 王星星
+ * date : 2026-10-25 14:40
+ * email : 1099420259@qq.com
+ * description : 提供 Json、OkHttpClient 与 Retrofit；API_BASE_URL 来自 BuildConfig，当前未定义 API 接口。
+ */
 package com.wangxingxing.wxxstoremanage.core.network.di
 
 import com.wangxingxing.wxxstoremanage.BuildConfig
