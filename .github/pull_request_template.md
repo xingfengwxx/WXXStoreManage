@@ -32,7 +32,10 @@
   - `./gradlew :app:assembleDebug`
   - `./gradlew :app:lintDebug`
   - `./gradlew :app:testDebugUnitTest`
+  - `./gradlew :app:validateDebugScreenshotTest`（涉及 Compose 视觉变更时；基准图变更需附 `updateDebugScreenshotTest` 结果）
+  - `./gradlew :app:connectedDebugAndroidTest`（涉及 DAO / Hilt / Compose 设备测试时）
+  - `./gradlew :app:jacocoTestReport`（涉及覆盖率变化时）
 
 ## 未执行检查及原因
 
-<!-- ktlint / detekt / CI / screenshot test 尚未接入；如有其他未执行项，逐条说明。 -->
+<!-- ktlint / detekt 尚未接入；如有其他未执行项，逐条说明。 -->

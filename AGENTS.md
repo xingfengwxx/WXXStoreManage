@@ -21,6 +21,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - Hilt 与 Room 统一使用 KSP，禁止 kapt。
 - 路由使用 kotlinx-serialization；Nav3 的 ViewModel 作用域使用 `lifecycle-viewmodel-navigation3`。
 - Java 17；minSdk 24；compileSdk/targetSdk 37。
+- AGP 固定在 9.4.0（Android Studio 2026.2 支持上限）；截图测试因此使用 `com.android.compose.screenshot` 插件，AGP 9.5+ 的内置测试套件不可用。
 - 所有版本只写在 `gradle/libs.versions.toml`。禁止硬编码版本、动态版本、`+` 与 SNAPSHOT。
 - 新增依赖必须说明用途、替代方案与维护状态；优先 Jetpack 官方库。
 - 引入依赖后必须实际编译验证，不以“应该可以”作为结论。
@@ -240,16 +241,26 @@ sealed interface InboundOrderDetailEffect {
 
 ## 10. 测试与验证
 
-- 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer。
-- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片。
-- 未接入：Room in-memory、Hilt test、Compose UI 测试、Screenshot test。
+- 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer（本地）、Robolectric + Compose UI Test（本地 UI）、Hilt Android Testing + Room Testing（设备）、Jacoco（本地覆盖率）、Compose Preview Screenshot Testing（`com.android.compose.screenshot` 插件）、GitHub Actions CI。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片；LoginScreen 的 Robolectric 渲染与交互；设备侧 StockDao / CatalogDao 的 SQL 口径、外键级联与 upsert、AppDatabase v1 schema 校验、SessionGate 的登录失败与会话切换（Hilt `@BindValue` 替换数据层）；Login / Home / Inventory / Documents / Profile 五个页面在九种窗口尺寸、空态、错误态与 1.5 倍字体下的截图基准。
+- 未接入：ktlint、detekt。
+- 测试分层：
+  - `src/test`：纯 JVM 单元测试与 Robolectric Compose 测试；Robolectric 的 `android-all-instrumented` 由 `:app:syncRobolectricDependencies` 预先同步到 `app/build/robolectric-deps`，测试进程不联网下载。
+  - `src/androidTest`：真实 SQLite 的 Room DAO / migration 测试与 Hilt 注入的 Compose 设备测试；测试方法名禁止含空格，DEX 038 不接受该类名。
+  - `src/screenshotTest`：Layoutlib 渲染的 Compose 截图测试，基准图存放在 `app/src/screenshotTestDebug/reference/`；Preview 名称不要包含小数点，否则基准图文件名会退化为哈希值。
 - 必须测试：ViewModel 状态转换（Loading → Content/Empty/Error、Submit 成功/失败、重试）、mapper、错误映射、DAO 与 migration、同步逻辑。
 - Compose UI 测试只覆盖关键路径：登录、入库提交、盘点审核。
+- 截图测试使用 `com.android.compose.screenshot` 插件，需同时开启 `gradle.properties` 与模块 `experimentalProperties` 中的 `android.experimental.enableScreenshotTest`，插件转正后移除这两个开关；新增或修改 Screen 的视觉行为后必须重新生成并提交基准图。
+- 截图基准只在 macOS 上生成与校验，不纳入 Linux CI：Layoutlib 的字体与光栅化跨平台不一致，混跑会产生大量误报；如需在 CI 校验，必须改用同一平台（如固定的 Linux 容器）重新生成全部基准图。
 - 当前可用命令（2026-10-25 已实际执行）：
   - `./gradlew :app:assembleDebug`
   - `./gradlew :app:lintDebug`
-  - `./gradlew :app:testDebugUnitTest`
-- 未接入：ktlint、detekt、CI。新增门禁后必须在此更新命令与状态。
+  - `./gradlew :app:testDebugUnitTest`（60 个用例）
+  - `./gradlew :app:validateDebugScreenshotTest`（60 张基准图，本地 Layoutlib）
+  - `./gradlew :app:updateDebugScreenshotTest`（有意变更 UI 后更新基准图）
+  - `./gradlew :app:connectedDebugAndroidTest`（14 个用例，需连接设备或模拟器）
+  - `./gradlew :app:jacocoTestReport`（覆盖率报告：`app/build/reports/jacoco/jacocoTestReport`）
+- CI 配置为 `.github/workflows/ci.yml`：构建、Lint、单元测试与覆盖率在 Ubuntu 上执行，connectedDebugAndroidTest 在 CI 模拟器上执行；截图测试仅本地执行。该工作流已落盘但尚未在 GitHub Actions 实际运行，首次推送后需确认结果。新增门禁后必须在此更新命令与状态。
 - 交付必须给出实际执行过的命令与结果；未执行的检查写明原因，不得虚构通过。
 
 ## 11. AI-Generated Code Requirements
@@ -276,3 +287,5 @@ sealed interface InboundOrderDetailEffect {
 - ADR 只在“难回退、缺少上下文会令人意外、存在真实取舍”三者同时成立时新增。
 - 提交前按 [.github/pull_request_template.md](.github/pull_request_template.md) 填写状态覆盖、并发策略、日志安全与验证证据。
 - 文档与代码冲突时，先确认哪个是预期行为，再同步修改另一方；不要默默遵守过期文档。
+- 需求链接分析与任务拆解使用用户级 `requirement-to-plan` skill：先抓取并批量澄清，确认后输出 `docs/requirements/<doc-id>/analysis.md` 与 `tasks.md`。
+- 需求原文快照只存本地缓存，不提交仓库；分析结论中的术语与范围变更仍按本文件与 [GLOSSARY.md](GLOSSARY.md) 的规则确认。
