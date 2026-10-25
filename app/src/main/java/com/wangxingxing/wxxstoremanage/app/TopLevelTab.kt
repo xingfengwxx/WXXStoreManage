@@ -22,6 +22,7 @@ import com.wangxingxing.wxxstoremanage.feature.profile.route.Profile as ProfileD
 
 internal enum class TopLevelTab(
     val route: AppRoute,
+    // 显式限定到构造参数，消除注解目标歧义警告。
     @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {

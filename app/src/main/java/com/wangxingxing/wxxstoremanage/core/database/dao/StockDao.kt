@@ -21,6 +21,7 @@ data class StockSummaryRow(
 @Dao
 interface StockDao {
 
+    // 汇总为全局口径，不按当前仓库过滤；按仓库查询走 observeByWarehouse。
     @Query(
         """
         SELECT COUNT(*) AS skuCount,

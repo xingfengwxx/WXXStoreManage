@@ -29,7 +29,7 @@ class NavigationState(
 ) {
 
     val topLevelRoute: AppRoute
-        // Only top-level routes are written to this state.
+        // 该状态只由 selectTopLevelRoute 写入一级页路由，因此这里的转换是安全的。
         get() = topLevelRouteState.value as AppRoute
 
     val currentBackStack: NavBackStack<NavKey>
@@ -58,6 +58,7 @@ class NavigationState(
         return topLevelRoutesInUse().flatMap { route -> decoratedEntries[route].orEmpty() }
     }
 
+    // 只渲染起始一级页与当前一级页，其余一级栈保留返回状态但不参与组合。
     private fun topLevelRoutesInUse(): List<AppRoute> =
         if (topLevelRoute == startRoute) {
             listOf(startRoute)

@@ -23,6 +23,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    // 未配置破坏性迁移：表结构变更必须提供 migration，否则升级后启动会失败。
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =

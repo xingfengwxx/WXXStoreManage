@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 
 fun Throwable.toAppError(): AppError = when (this) {
+    // 协程取消不是业务错误，必须原样抛出；映射为 Unknown 会吞掉取消并破坏结构化并发。
     is CancellationException -> throw this
     is HttpException -> AppError(
         type = code().toAppErrorType(),

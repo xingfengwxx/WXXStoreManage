@@ -23,6 +23,7 @@ class Navigator(
         if (backStack.size > 1) {
             backStack.removeLastOrNull()
         } else {
+            // 一级页栈底再返回时回到起始一级页，而不是退出应用。
             state.selectTopLevelRoute(state.startRoute)
         }
     }

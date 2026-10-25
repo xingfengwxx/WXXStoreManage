@@ -40,6 +40,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRetrofit(client: OkHttpClient, json: Json): Retrofit = Retrofit.Builder()
+        // 构建脚本已要求 API_BASE_URL 以 "/" 结尾，否则 Retrofit 初始化时会抛异常。
         .baseUrl(BuildConfig.API_BASE_URL)
         .client(client)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))

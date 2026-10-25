@@ -43,6 +43,7 @@ class InventoryViewModel @Inject constructor(
         .flatMapLatest {
             stockRepository.observeSummary()
                 .map { summary -> summary.toUiState() }
+                // 必须留在 flatMapLatest 内部：放在链尾时错误会终止整条流，Retry 无法重新订阅。
                 .catch { throwable ->
                     logger.log(
                         AppLogEvent(

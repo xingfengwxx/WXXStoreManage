@@ -43,6 +43,7 @@ class HomeViewModel @Inject constructor(
         .flatMapLatest {
             warehouseRepository.observeActiveWarehouses()
                 .map { warehouses -> warehouses.toUiState() }
+                // 必须留在 flatMapLatest 内部：放在链尾时错误会终止整条流，Retry 无法重新订阅。
                 .catch { throwable ->
                     logger.log(
                         AppLogEvent(
