@@ -27,7 +27,7 @@ interface AppLogger {
 
     /**
      * 输出无结构化字段的调试文本，仅用于 HttpLoggingInterceptor 等整段报文链路。
-     * 调用方必须先完成脱敏，禁止传入密码、token 与会话 Cookie。
+     * 报文未经脱敏，只允许在 debug 构建调用。
      */
     fun debug(section: String, message: String)
 }

@@ -2,14 +2,13 @@
  * author : 王星星
  * date : 2026-10-25 14:40
  * email : 1099420259@qq.com
- * description : 提供 Json、OkHttpClient 与两套 Retrofit；debug 下安装脱敏后的完整请求日志，release 不安装。
+ * description : 提供 Json、OkHttpClient 与两套 Retrofit；debug 下安装完整请求日志，release 不安装。
  */
 package com.wangxingxing.wxxstoremanage.core.network.di
 
 import com.wangxingxing.wxxstoremanage.BuildConfig
 import com.wangxingxing.wxxstoremanage.core.common.AppLogger
 import com.wangxingxing.wxxstoremanage.core.network.api.WanAndroidAuthApi
-import com.wangxingxing.wxxstoremanage.core.network.logging.redactSensitiveLog
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,15 +45,11 @@ object NetworkModule {
         .writeTimeout(30, TimeUnit.SECONDS)
         .apply {
             if (BuildConfig.DEBUG) {
-                // 日志仍走 AppLogger；密码、token、Cookie 与 Authorization 在输出前脱敏。
                 addInterceptor(
                     HttpLoggingInterceptor { message ->
-                        logger.debug(HTTP_LOG_SECTION, redactSensitiveLog(message))
+                        logger.debug(HTTP_LOG_SECTION, message)
                     }.apply {
                         level = HttpLoggingInterceptor.Level.BODY
-                        redactHeader("Cookie")
-                        redactHeader("Set-Cookie")
-                        redactHeader("Authorization")
                     },
                 )
             }
