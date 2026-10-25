@@ -24,4 +24,10 @@ data class AppLogEvent(
 
 interface AppLogger {
     fun log(event: AppLogEvent)
+
+    /**
+     * 输出无结构化字段的调试文本，仅用于 HttpLoggingInterceptor 等整段报文链路。
+     * 调用方必须先完成脱敏，禁止传入密码、token 与会话 Cookie。
+     */
+    fun debug(section: String, message: String)
 }

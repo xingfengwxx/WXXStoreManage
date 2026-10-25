@@ -14,6 +14,7 @@ import com.wangxingxing.wxxstoremanage.core.common.AppErrorType
 fun AppErrorType.errorMessageRes(): Int = when (this) {
     AppErrorType.NetworkUnavailable -> R.string.error_network_unavailable
     AppErrorType.SessionExpired -> R.string.error_session_expired
+    AppErrorType.AuthenticationFailed -> R.string.error_authentication_failed
     AppErrorType.ServiceUnavailable -> R.string.error_service_unavailable
     AppErrorType.Validation -> R.string.error_validation
     AppErrorType.Conflict -> R.string.error_conflict

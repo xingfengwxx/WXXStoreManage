@@ -9,6 +9,7 @@ package com.wangxingxing.wxxstoremanage.core.common
 enum class AppErrorType {
     NetworkUnavailable,
     SessionExpired,
+    AuthenticationFailed,
     ServiceUnavailable,
     Validation,
     Conflict,

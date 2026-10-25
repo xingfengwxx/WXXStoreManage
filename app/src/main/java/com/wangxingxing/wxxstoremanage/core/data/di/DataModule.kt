@@ -6,10 +6,18 @@
  */
 package com.wangxingxing.wxxstoremanage.core.data.di
 
+import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepository
+import com.wangxingxing.wxxstoremanage.core.data.repository.AuthRepositoryImpl
 import com.wangxingxing.wxxstoremanage.core.data.repository.StockRepository
 import com.wangxingxing.wxxstoremanage.core.data.repository.StockRepositoryImpl
 import com.wangxingxing.wxxstoremanage.core.data.repository.WarehouseRepository
 import com.wangxingxing.wxxstoremanage.core.data.repository.WarehouseRepositoryImpl
+import com.wangxingxing.wxxstoremanage.core.data.session.BusinessDataCleaner
+import com.wangxingxing.wxxstoremanage.core.data.session.DataStoreSessionStore
+import com.wangxingxing.wxxstoremanage.core.data.session.DefaultSessionCleaner
+import com.wangxingxing.wxxstoremanage.core.data.session.RoomBusinessDataCleaner
+import com.wangxingxing.wxxstoremanage.core.data.session.SessionCleaner
+import com.wangxingxing.wxxstoremanage.core.data.session.SessionStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -27,4 +35,20 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindStockRepository(impl: StockRepositoryImpl): StockRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionStore(impl: DataStoreSessionStore): SessionStore
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionCleaner(impl: DefaultSessionCleaner): SessionCleaner
+
+    @Binds
+    @Singleton
+    abstract fun bindBusinessDataCleaner(impl: RoomBusinessDataCleaner): BusinessDataCleaner
 }

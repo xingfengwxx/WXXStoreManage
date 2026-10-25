@@ -23,14 +23,36 @@
     <string name="documents_empty_title">暂无单据数据</string>
     <string name="documents_empty_description">入库、出库与盘点单据会在这里显示。</string>
 
+    <string name="login_title">登录</string>
+    <string name="login_subtitle">使用玩Android账号登录</string>
+    <string name="login_username_label">账号</string>
+    <string name="login_password_label">密码</string>
+    <string name="login_password_show">显示</string>
+    <string name="login_password_hide">隐藏</string>
+    <string name="login_username_required">请输入账号</string>
+    <string name="login_password_required">请输入密码</string>
+    <string name="login_submit">登录</string>
+    <string name="login_submitting">登录中…</string>
+
     <string name="profile_title">我的</string>
     <string name="profile_empty_title">当前未登录</string>
-    <string name="profile_empty_description">登录功能尚未接入。</string>
+    <string name="profile_empty_description">登录状态已失效，请重新登录。</string>
+    <string name="profile_account">账号：%1$s</string>
+    <string name="profile_email">邮箱：%1$s</string>
+    <string name="profile_user_id">用户 ID：%1$d</string>
+    <string name="profile_avatar_description">用户头像</string>
+    <string name="profile_logout">退出登录</string>
+    <string name="profile_logging_out">正在退出…</string>
+    <string name="profile_logout_title">退出登录</string>
+    <string name="profile_logout_message">退出后需要重新登录，本机缓存的业务数据将被清除。</string>
+    <string name="profile_logout_confirm">退出</string>
+    <string name="profile_logout_cancel">取消</string>
 
     <string name="action_retry">重试</string>
 
     <string name="error_network_unavailable">网络不可用，请检查网络连接。</string>
     <string name="error_session_expired">登录已过期，请重新登录。</string>
+    <string name="error_authentication_failed">账号或密码不正确。</string>
     <string name="error_service_unavailable">服务暂时不可用，请稍后重试。</string>
     <string name="error_validation">提交内容有误，请检查后重试。</string>
     <string name="error_conflict">数据已变更，请刷新后重试。</string>

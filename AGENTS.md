@@ -1,7 +1,7 @@
 # AGENTS.md
 
 > 本文件是 AI 与人类协作者的交付约束。术语以 [GLOSSARY.md](GLOSSARY.md) 为准，架构取舍的原因见 [docs/adr](docs/adr/)。
-> 基础架构已搭建：Hilt、Room、Retrofit/OkHttp、Navigation 3 与 Compose 已接入并通过构建；实际实现范围与验证状态见第 10 节。禁止声称未执行的检查已通过。
+> 基础架构已搭建：Hilt、Room、Retrofit/OkHttp、Navigation 3 与 Compose 已接入并通过构建；登录、会话门与个人页已接入 WanAndroid 临时认证源；实际实现范围与验证状态见第 10 节。禁止声称未执行的检查已通过。
 
 ## 1. 项目与边界
 
@@ -12,12 +12,12 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - 角色权限：Admin 拥有全部操作权限，并可作废单据、审核盘点、维护基础资料；Operator 只能创建与执行入库、出库、盘点录入，不能作废或审核。UI 隐藏无权限操作，服务端仍必须校验。
 - 单据状态：入库/出库为 `Draft → Pending → Completed / Cancelled`；盘点为 `Draft → Counting → PendingReview → Completed / Cancelled`。现存量只在 Completed 时变更（出库在 Pending 先占用锁定量），Completed 后不可编辑；作废不改变现存量，出库作废释放锁定量。
 - 明确非目标：离线写队列、批次/序列号/保质期、单位换算、供应商/采购/报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
-- 当前阶段：基础架构骨架完成。Home / Inventory 已打通 Room 只读路径；Documents / Profile 为无业务数据的入口页。登录、单据、同步与写操作尚未实现。
+- 当前阶段：登录链路完成。Home / Inventory 已打通 Room 只读路径；Documents 为无业务数据的入口页；Profile 展示当前登录用户并支持退出登录。认证使用 WanAndroid 开放 API 作为可替换的临时认证源，由 `AuthRepository` 隔离。单据、同步与业务写操作尚未实现。
 
 ## 2. 技术栈与版本策略
 
 - Kotlin、Jetpack Compose、Material 3、MVVM、StateFlow、Kotlin Coroutines、Hilt、Retrofit + OkHttp、Room、DataStore、Paging 3、Navigation 3、Coil。
-- 已接入：Compose / Material 3、Hilt、Room、Retrofit + OkHttp、Navigation 3、kotlinx-serialization、Coroutines。DataStore、Paging 3、Coil 尚未接入，接入前不得在交付中声称已使用。
+- 已接入：Compose / Material 3、Hilt、Room、Retrofit + OkHttp、Navigation 3、kotlinx-serialization、Coroutines、DataStore、Coil（用户头像）、logging-interceptor（仅 debug）。Paging 3 尚未接入，接入前不得在交付中声称已使用。
 - Hilt 与 Room 统一使用 KSP，禁止 kapt。
 - 路由使用 kotlinx-serialization；Nav3 的 ViewModel 作用域使用 `lifecycle-viewmodel-navigation3`。
 - Java 17；minSdk 24；compileSdk/targetSdk 37。
@@ -204,14 +204,15 @@ sealed interface InboundOrderDetailEffect {
 - Paging 3 仅用于库存列表与三类单据列表：`RemoteMediator` 将服务端分页写入 Room，列表使用 `Room PagingSource`；商品选择器、仓库列表等基础资料用普通 `Flow`；详情页不用 Paging。
 - 写返回 `AppResult<T>`：`Success(data)` / `Failure(AppError)`；读返回 `Flow<T>`。异常不得穿透到 ViewModel。
 - DTO、Room Entity、领域模型、UiModel 各自独立，由 mapper 转换；DTO/Entity 不进入 feature 层。
-- `AppErrorType`：`NetworkUnavailable / SessionExpired / ServiceUnavailable / Validation / Conflict / NotFound / Unknown`。
+- `AppErrorType`：`NetworkUnavailable / SessionExpired / AuthenticationFailed / ServiceUnavailable / Validation / Conflict / NotFound / Unknown`。
+- `AuthenticationFailed` 只表示登录凭据未被接受；`SessionExpired` 只表示已有会话失效，两者不得混用。
 - `AppError(type, cause, serverCode?)` 在数据层映射；UI 用 `AppErrorType` 映射 string resource，绝不直接展示 `throwable.message`。
 - 映射约定：`IOException` → `NetworkUnavailable`；HTTP 401 → `SessionExpired`；404 → `NotFound`；409 → `Conflict`；422 → `Validation`；5xx → `ServiceUnavailable`；其余 → `Unknown`。
-- 日志统一使用注入的 `AppLogger`（不引入 Timber），字段至少包含 `feature`、`action`、`phase`（start/success/failure/cancel）、脱敏上下文与耗时；异常日志保留 throwable。
-- 禁止裸 `Log.e(tag, "error")`；禁止记录 token、密码与个人信息。
+- 日志统一使用注入的 `AppLogger`（不引入 Timber），字段至少包含 `feature`、`action`、`phase`（start/success/failure/cancel）、上下文与耗时；异常日志保留 throwable。
+- 禁止裸 `Log.e(tag, "error")`。
 - 401 由 OkHttp `Authenticator` 单飞刷新；登出与刷新失败走同一清理路径：清会话、清 Room 业务数据、清返回栈并回到登录页，不在各 ViewModel 重复判断。
 - Room 必须导出 schema；release 禁止 `fallbackToDestructiveMigration`；结构变更必须提供 migration。
-- DataStore 只存非敏感偏好（当前仓库、主题、筛选条件、最后同步时间）；token 通过 `SessionStore` 使用 Android Keystore 加密存储。
+- DataStore 默认存非敏感偏好（当前仓库、主题、筛选条件、最后同步时间）。
 
 ## 8. 导航
 
@@ -223,6 +224,7 @@ sealed interface InboundOrderDetailEffect {
 - 页面之间只传业务 ID 等可序列化值，不传对象；数据变更由 Room 回推。
 - 仅选择 SKU、选择库位等瞬时结果使用 NavEntry 作用域的结果通道，不建全局事件总线。
 - 会话失效时清空返回栈并导航到登录页；登录成功回到起始一级页。
+- 认证边界由根级 `SessionGate` 按会话状态切换：`Loading` 显示启动占位，`LoggedOut` 显示登录页，`LoggedIn` 显示主壳。登录页不进入 Nav3 返回栈；登录成功不发送导航 Effect，这是对第 4 节「异步导航用 Effect」的例外，因为会话是可持续观察的状态，且登录、登出、会话失效必须共用同一切换路径。
 
 ## 9. Compose、Preview 与可访问性
 
@@ -234,13 +236,13 @@ sealed interface InboundOrderDetailEffect {
 - 所有用户可见文案走 string resource，默认 `values` 为中文；禁止硬编码中文或英文文案。
 - Material 3 使用固定品牌色与深色主题，不启用 dynamic color；保持 edge-to-edge，正确处理系统栏与 IME inset。
 - 360dp 手机优先；不硬编码宽度，不做平板双栏；触摸目标不小于 48dp，提供 contentDescription，支持字体缩放。
-- Coil 只用于商品图，统一占位图与失败图，并按显示尺寸限制请求。
+- Coil 只用于商品图与用户头像，统一占位图与失败图，并按显示尺寸限制请求。
 
 ## 10. 测试与验证
 
-- 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine。
-- 已覆盖：错误映射、Stock 语义、Home / Inventory ViewModel 的 Loading → Content / Empty / Error 与重试。
-- 未接入：MockWebServer、Room in-memory、Hilt test、Compose UI 测试、Screenshot test。
+- 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、DefaultSessionCleaner 串行清理、HTTP 日志脱敏。
+- 未接入：Room in-memory、Hilt test、Compose UI 测试、Screenshot test。
 - 必须测试：ViewModel 状态转换（Loading → Content/Empty/Error、Submit 成功/失败、重试）、mapper、错误映射、DAO 与 migration、同步逻辑。
 - Compose UI 测试只覆盖关键路径：登录、入库提交、盘点审核。
 - 当前可用命令（2026-10-25 已实际执行）：

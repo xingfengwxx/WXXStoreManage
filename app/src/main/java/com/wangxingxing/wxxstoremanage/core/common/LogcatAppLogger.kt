@@ -28,6 +28,10 @@ class LogcatAppLogger @Inject constructor() : AppLogger {
         }
     }
 
+    override fun debug(section: String, message: String) {
+        Log.d(TAG, "[$section] $message")
+    }
+
     private companion object {
         const val TAG = "WXXStoreManage"
     }

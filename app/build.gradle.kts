@@ -11,6 +11,13 @@ val apiBaseUrl = providers.gradleProperty("API_BASE_URL")
     .getOrElse("https://api.example.invalid/")
 require(apiBaseUrl.endsWith("/")) { "API_BASE_URL must end with '/': $apiBaseUrl" }
 
+// 玩Android 只是当前临时认证源，后续替换为仓储后端时只改这一处地址与 AuthRepository 实现。
+val wanandroidBaseUrl = providers.gradleProperty("WANANDROID_BASE_URL")
+    .getOrElse("https://wanandroid.com/")
+require(wanandroidBaseUrl.endsWith("/")) {
+    "WANANDROID_BASE_URL must end with '/': $wanandroidBaseUrl"
+}
+
 android {
     namespace = "com.wangxingxing.wxxstoremanage"
     compileSdk {
@@ -26,6 +33,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "WANANDROID_BASE_URL", "\"$wanandroidBaseUrl\"")
     }
 
     buildTypes {
@@ -75,10 +83,15 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.mockwebserver3)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

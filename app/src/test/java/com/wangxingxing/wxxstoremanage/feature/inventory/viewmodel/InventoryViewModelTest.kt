@@ -114,4 +114,6 @@ private class RecordingLogger : AppLogger {
     override fun log(event: AppLogEvent) {
         events += event
     }
+
+    override fun debug(section: String, message: String) = Unit
 }

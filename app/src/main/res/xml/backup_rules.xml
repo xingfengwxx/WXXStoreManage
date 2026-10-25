@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   会话 DataStore 保存可重放凭据的密文，必须排除在备份之外；
+   密文离开本机后仍可被同机恢复，等同于泄露会话。
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="file" path="datastore/session_store.preferences_pb" />
 </full-backup-content>
