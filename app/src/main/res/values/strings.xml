@@ -1,3 +1,39 @@
 <resources>
     <string name="app_name">WXXStoreManage</string>
+
+    <string name="tab_home">首页</string>
+    <string name="tab_inventory">库存</string>
+    <string name="tab_documents">单据</string>
+    <string name="tab_profile">我的</string>
+
+    <string name="home_title">首页</string>
+    <string name="home_empty_title">暂无仓库数据</string>
+    <string name="home_empty_description">仓库基础资料同步后会在这里显示。</string>
+    <string name="warehouse_code">编码 %1$s</string>
+
+    <string name="inventory_title">库存</string>
+    <string name="inventory_sku_count">SKU 数</string>
+    <string name="inventory_on_hand">现存量</string>
+    <string name="inventory_locked">锁定量</string>
+    <string name="inventory_available">可用量</string>
+    <string name="inventory_empty_title">暂无库存数据</string>
+    <string name="inventory_empty_description">还没有可展示的库存记录。</string>
+
+    <string name="documents_title">单据</string>
+    <string name="documents_empty_title">暂无单据数据</string>
+    <string name="documents_empty_description">入库、出库与盘点单据会在这里显示。</string>
+
+    <string name="profile_title">我的</string>
+    <string name="profile_empty_title">当前未登录</string>
+    <string name="profile_empty_description">登录功能尚未接入。</string>
+
+    <string name="action_retry">重试</string>
+
+    <string name="error_network_unavailable">网络不可用，请检查网络连接。</string>
+    <string name="error_session_expired">登录已过期，请重新登录。</string>
+    <string name="error_service_unavailable">服务暂时不可用，请稍后重试。</string>
+    <string name="error_validation">提交内容有误，请检查后重试。</string>
+    <string name="error_conflict">数据已变更，请刷新后重试。</string>
+    <string name="error_not_found">未找到相关数据。</string>
+    <string name="error_unknown">发生未知错误，请稍后重试。</string>
 </resources>

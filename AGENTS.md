@@ -1,7 +1,7 @@
 # AGENTS.md
 
 > 本文件是 AI 与人类协作者的交付约束。术语以 [GLOSSARY.md](GLOSSARY.md) 为准，架构取舍的原因见 [docs/adr](docs/adr/)。
-> 当前仓库仍是空模板：文中技术栈尚未接入，禁止在交付中声称“已接入”或“已通过”。
+> 基础架构已搭建：Hilt、Room、Retrofit/OkHttp、Navigation 3 与 Compose 已接入并通过构建；实际实现范围与验证状态见第 10 节。禁止声称未执行的检查已通过。
 
 ## 1. 项目与边界
 
@@ -12,14 +12,15 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - 角色权限：Admin 拥有全部操作权限，并可作废单据、审核盘点、维护基础资料；Operator 只能创建与执行入库、出库、盘点录入，不能作废或审核。UI 隐藏无权限操作，服务端仍必须校验。
 - 单据状态：入库/出库为 `Draft → Pending → Completed / Cancelled`；盘点为 `Draft → Counting → PendingReview → Completed / Cancelled`。现存量只在 Completed 时变更（出库在 Pending 先占用锁定量），Completed 后不可编辑；作废不改变现存量，出库作废释放锁定量。
 - 明确非目标：离线写队列、批次/序列号/保质期、单位换算、供应商/采购/报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
-- 当前阶段：文档先行；业务代码、依赖与质量门禁尚未接入。
+- 当前阶段：基础架构骨架完成。Home / Inventory 已打通 Room 只读路径；Documents / Profile 为无业务数据的入口页。登录、单据、同步与写操作尚未实现。
 
 ## 2. 技术栈与版本策略
 
 - Kotlin、Jetpack Compose、Material 3、MVVM、StateFlow、Kotlin Coroutines、Hilt、Retrofit + OkHttp、Room、DataStore、Paging 3、Navigation 3、Coil。
+- 已接入：Compose / Material 3、Hilt、Room、Retrofit + OkHttp、Navigation 3、kotlinx-serialization、Coroutines。DataStore、Paging 3、Coil 尚未接入，接入前不得在交付中声称已使用。
 - Hilt 与 Room 统一使用 KSP，禁止 kapt。
 - 路由使用 kotlinx-serialization；Nav3 的 ViewModel 作用域使用 `lifecycle-viewmodel-navigation3`。
-- Java 17；minSdk 24；compileSdk/targetSdk 37。现有模板的 Java 11 在接入依赖时一并升级。
+- Java 17；minSdk 24；compileSdk/targetSdk 37。
 - 所有版本只写在 `gradle/libs.versions.toml`。禁止硬编码版本、动态版本、`+` 与 SNAPSHOT。
 - 新增依赖必须说明用途、替代方案与维护状态；优先 Jetpack 官方库。
 - 引入依赖后必须实际编译验证，不以“应该可以”作为结论。
@@ -103,6 +104,7 @@ internal fun InventoryListScreen(
 ```
 
 - Route 是唯一允许接触 Navigator 与 Effect 的层。
+- 无业务数据与交互的纯入口页可以只有 `Route + Screen`；一旦接入数据或交互，必须补齐 UiState / Action / ViewModel / Repository，不得以静态文案长期替代。
 - Screen 不读取 ViewModel、不持有 Navigator/Context、不启动网络或数据库。
 - 用户点击导致的导航用回调；异步完成后的导航用 Effect。
 - 交互统一走 Action，避免堆叠含义相近的 lambda；导航与纯展示回调除外。
@@ -218,15 +220,16 @@ sealed interface InboundOrderDetailEffect {
 
 ## 10. 测试与验证
 
-- 基线：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer + Room in-memory + Hilt test。
+- 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory ViewModel 的 Loading → Content / Empty / Error 与重试。
+- 未接入：MockWebServer、Room in-memory、Hilt test、Compose UI 测试、Screenshot test。
 - 必须测试：ViewModel 状态转换（Loading → Content/Empty/Error、Submit 成功/失败、重试）、mapper、错误映射、DAO 与 migration、同步逻辑。
 - Compose UI 测试只覆盖关键路径：登录、入库提交、盘点审核。
-- Screenshot test 尚未接入，不得声称已覆盖。
-- 当前可用命令：
+- 当前可用命令（2026-10-25 已实际执行）：
   - `./gradlew :app:assembleDebug`
   - `./gradlew :app:lintDebug`
   - `./gradlew :app:testDebugUnitTest`
-- 未接入：ktlint、detekt、CI、screenshot test。新增门禁后必须在此更新命令与状态。
+- 未接入：ktlint、detekt、CI。新增门禁后必须在此更新命令与状态。
 - 交付必须给出实际执行过的命令与结果；未执行的检查写明原因，不得虚构通过。
 
 ## 11. AI-Generated Code Requirements

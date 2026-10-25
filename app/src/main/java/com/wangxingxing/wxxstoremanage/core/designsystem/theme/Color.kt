@@ -1,0 +1,52 @@
+package com.wangxingxing.wxxstoremanage.core.designsystem.theme
+
+import androidx.compose.ui.graphics.Color
+
+val BrandBlue = Color(0xFF00639B)
+val BrandBlueContainer = Color(0xFFCDE5FF)
+val OnBrandBlueContainer = Color(0xFF001D34)
+val BrandBlueLight = Color(0xFF96CCFF)
+val BrandBlueContainerDark = Color(0xFF004A77)
+val OnBrandBlueContainerDark = Color(0xFFCDE5FF)
+val BrandBlueOnDark = Color(0xFF003354)
+
+val SlateBlue = Color(0xFF51606F)
+val SlateBlueLight = Color(0xFFB9C8DA)
+val SlateBlueOnDark = Color(0xFF233240)
+val SlateBlueContainerLight = Color(0xFFD3E4F5)
+val OnSlateBlueContainerLight = Color(0xFF0F1D2A)
+val SlateBlueContainerDark = Color(0xFF3A4857)
+val OnSlateBlueContainerDark = Color(0xFFD5E4F6)
+
+val WarmTaupe = Color(0xFF6B5778)
+val WarmTaupeLight = Color(0xFFD7BDE6)
+val WarmTaupeOnDark = Color(0xFF3B2947)
+val WarmTaupeContainerLight = Color(0xFFF2DAFF)
+val OnWarmTaupeContainerLight = Color(0xFF251431)
+val WarmTaupeContainerDark = Color(0xFF523F60)
+val OnWarmTaupeContainerDark = Color(0xFFF2DAFF)
+
+val SurfaceLight = Color(0xFFF7F9FC)
+val OnSurfaceLight = Color(0xFF191C20)
+val SurfaceVariantLight = Color(0xFFDEE3EB)
+val OnSurfaceVariantLight = Color(0xFF42474E)
+val OutlineLight = Color(0xFF72777F)
+val OutlineVariantLight = Color(0xFFC2C7CF)
+val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
+val SurfaceContainerLowLight = Color(0xFFF1F4F9)
+val SurfaceContainerLight = Color(0xFFEBEEF4)
+val SurfaceContainerHighLight = Color(0xFFE5E8EE)
+val SurfaceContainerHighestLight = Color(0xFFDFE2E8)
+
+val SurfaceDark = Color(0xFF101418)
+val OnSurfaceDark = Color(0xFFE1E2E8)
+val SurfaceVariantDark = Color(0xFF42474E)
+val OnSurfaceVariantDark = Color(0xFFC2C7CF)
+val OutlineDark = Color(0xFF8C9199)
+val OutlineVariantDark = Color(0xFF42474E)
+val SurfaceContainerLowestDark = Color(0xFF0B0F12)
+val SurfaceContainerLowDark = Color(0xFF181C20)
+val SurfaceContainerDark = Color(0xFF1C2024)
+val SurfaceContainerHighDark = Color(0xFF262A2E)
+val SurfaceContainerHighestDark = Color(0xFF31353A)
+
