@@ -254,6 +254,7 @@ sealed interface InboundOrderDetailEffect {
 
 ## 11. AI-Generated Code Requirements
 
+- 分析代码流程或定位代码时优先调用 CodeGraph MCP 的 `codegraph_explore`，一次取得相关符号源码与调用链后不再重复 Read；仅当索引未覆盖（资源 XML、Gradle 脚本、未索引文件）或返回信息不足时退回 Grep/Read，并在交付中说明原因。
 - 实现前列出关键假设、影响范围与可验证的完成条件。
 - 每一行变更都能追溯到当前需求；不进行无关重构或格式化。
 - 优先复用现有模式；新增抽象前说明它消除的实际重复或复杂度。
