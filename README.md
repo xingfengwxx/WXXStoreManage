@@ -24,7 +24,7 @@
 
 | 分类 | 选型 | 版本 |
 | --- | --- | --- |
-| 语言 / 构建 | Kotlin、Java 17、AGP、Gradle Wrapper | Kotlin 2.2.10、AGP 9.4.0 |
+| 语言 / 构建 | Kotlin、Java 17（保留手写 Java 与 XML 编译能力）、AGP、Gradle Wrapper | Kotlin 2.2.10、AGP 9.4.0 |
 | UI | Jetpack Compose、Material 3 | Compose BOM 2026.02.01 |
 | 架构 | MVVM + UiState、Hilt、KSP | Hilt 2.60.1、KSP 2.3.12 |
 | 导航 | Navigation 3 + kotlinx-serialization | 1.2.0 / 1.9.0 |
@@ -35,6 +35,8 @@
 | SDK | minSdk 24、compileSdk / targetSdk 37 | — |
 
 依赖注入与 Room 统一使用 KSP，不使用 kapt。所有版本集中声明在 [gradle/libs.versions.toml](gradle/libs.versions.toml)。
+
+默认实现仍为 Kotlin+Compose；保留手写 Java 源码与 XML 资源/layout 编译能力，遗留模块源码并入区与边界见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
 
 当前**未接入**：Paging 3、WorkManager、ktlint、detekt。Paging 3 只计划用于库存与三类单据列表。
 
@@ -150,6 +152,7 @@ com.wangxingxing.wxxstoremanage
 │   ├── ui/                  ContentState、RefreshState、AppendState、SubmitState、通用状态视图
 │   ├── navigation/          AppRoute、NavigationState、Navigator
 │   └── model/               领域模型（Warehouse、Sku、Stock、StockSummary、CurrentUser 等）
+├── legacy/                  遗留模块源码隔离区（规则见 legacy/README.md）
 └── feature/
     ├── auth/                登录（model / route / screen / viewmodel）
     ├── home/                首页：启用仓库列表（含 mapper）
@@ -235,7 +238,7 @@ UI 细节：Material 3 固定品牌色，不启用动态取色；360dp 手机优
 
 | 源集 | 运行方式 | 覆盖内容 |
 | --- | --- | --- |
-| `src/test` | JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer；Robolectric + Compose UI Test | 错误映射、Stock 语义、各 ViewModel 状态与重试、AuthRepository、SessionCleaner、日志分片、登录页渲染与交互 |
+| `src/test` / `src/testDebug` | JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer；Robolectric + Compose UI Test | 错误映射、Stock 语义、各 ViewModel 状态与重试、AuthRepository、SessionCleaner、日志分片、登录页渲染与交互、Java/XML 兼容探针 |
 | `src/androidTest` | 真机 / 模拟器，真实 SQLite 与 Hilt 注入 | DAO SQL 口径、外键级联、upsert、数据库 schema 与 migration、凭据密文落盘、SessionGate 会话切换 |
 | `src/screenshotTest` | Layoutlib（`com.android.compose.screenshot`） | Login / Home / Inventory / Documents / Profile 在九种窗口尺寸、空态、错误态与 1.5 倍字体下的视觉基准 |
 

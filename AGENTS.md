@@ -13,6 +13,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - 单据状态：入库/出库为 `Draft → Pending → Completed / Cancelled`；盘点为 `Draft → Counting → PendingReview → Completed / Cancelled`。现存量只在 Completed 时变更（出库在 Pending 先占用锁定量），Completed 后不可编辑；作废不改变现存量，出库作废释放锁定量。
 - 明确非目标：离线写队列、批次/序列号/保质期、单位换算、供应商/采购/报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
 - 当前阶段：登录链路完成，登录页支持记住账号密码（Keystore 加密保存，仅回填表单，不自动登录）。Home / Inventory 已打通 Room 只读路径；Documents 为无业务数据的入口页；Profile 展示当前登录用户并支持退出登录。认证使用 WanAndroid 开放 API 作为可替换的临时认证源，由 `AuthRepository` 隔离。单据、同步与业务写操作尚未实现。
+- 未来规划：以源码并入方式接入遗留模块（打印小票、清点发货），尚未实现；导入前必须先写 ADR，边界与待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
 
 ## 2. 技术栈与版本策略
 
@@ -21,6 +22,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - Hilt 与 Room 统一使用 KSP，禁止 kapt。
 - 路由使用 kotlinx-serialization；Nav3 的 ViewModel 作用域使用 `lifecycle-viewmodel-navigation3`。
 - Java 17；minSdk 24；compileSdk/targetSdk 37。
+- 保留 Java 源码与 XML 资源/layout 编译能力，禁止排除 `java`/`res` 源集或关闭资源编译；ViewBinding 按需开启，DataBinding 不引入。
 - AGP 固定在 9.4.0（Android Studio 2026.2 支持上限）；截图测试因此使用 `com.android.compose.screenshot` 插件，AGP 9.5+ 的内置测试套件不可用。
 - 所有版本只写在 `gradle/libs.versions.toml`。禁止硬编码版本、动态版本、`+` 与 SNAPSHOT。
 - 新增依赖必须说明用途、替代方案与维护状态；优先 Jetpack 官方库。
@@ -40,6 +42,7 @@ com.wangxingxing.wxxstoremanage
 │   ├── ui/               ContentState、RefreshState、错误文案映射、通用 UI
 │   ├── navigation/       AppRoute、Navigator、NavigationState
 │   └── common/           AppResult、AppError、AppLogger、Dispatcher 限定符
+├── legacy/               遗留模块源码隔离区，规则见 legacy/README.md
 └── feature/
     ├── auth/             登录
     ├── home/             首页
@@ -51,14 +54,14 @@ com.wangxingxing.wxxstoremanage
     └── profile/          我的
 ```
 
-- 依赖方向：`feature/* → core/*`；`core/data → core/database + core/network + core/model`；`app → feature/* + core/*`。
-- 禁止：feature 之间互相引用；core 反向依赖 feature；UI 直接使用 DTO、Room Entity、Retrofit 或 DAO。
+- 依赖方向：`feature/* → core/*`；`core/data → core/database + core/network + core/model`；`app → feature/* + core/* + legacy`；`legacy → core/*`；feature 与 legacy 互不依赖。
+- 禁止：feature 之间互相引用；core 反向依赖 feature；legacy 反向依赖 feature；UI 直接使用 DTO、Room Entity、Retrofit 或 DAO。
 - 不设 UseCase 层。Repository 接口与实现都在 `core/data`，领域模型在 `core/model`。
 - 每个 feature 内固定子包：`route/`、`screen/`、`viewmodel/`、`model/`、`mapper/`；路由键由 feature 声明，由 app 壳注册。
 - 命名：`XxxRoute`、`XxxScreen`、`XxxViewModel`、`XxxUiState`、`XxxAction`、`XxxEffect`、`XxxUiModel`、`mapToXxxUiModel()`。
 - 方法与业务字段命名表达业务语义：`refreshInventory()`、`submitInboundOrder()`、`loadSkuDetail()`；禁止 `getData()`、`request()`、`flag` 这类命名。
 - 禁止 `Utils`、`CommonManager`、`BaseHelper` 这类模糊容器；确需复用时按职责命名并放入对应 core 包。
-- 所有手写 Kotlin 文件（含测试）必须在 `package` 声明前使用统一文件头；生成代码、Gradle 脚本与资源 XML 不适用：
+- 所有手写 Kotlin/Java 文件（含测试）必须在 `package` 声明前使用统一文件头；生成代码、Gradle 脚本与资源 XML 不适用：
 
 ```kotlin
 /**
@@ -71,11 +74,13 @@ com.wangxingxing.wxxstoremanage
 
 - `date` 写入文件创建时的本地日期与 24 小时制时间，编辑或重命名不更新；新建文件使用当时时间。
 - `description` 使用中文，说明该文件的职责与边界；只有存在非显而易见的约束时才补充“注意：…”，不得只重复类名或包名。
-- 触碰到的旧 Kotlin 文件若缺少文件头，应在本次变更中补齐。
+- 触碰到的本仓库旧 Kotlin 文件若缺少文件头，应在本次变更中补齐；整包导入的遗留文件保留原文件头，见下方规则。
+- 手写 Java 遵守同一文件头、中文注释与 Java 17；空安全使用 androidx.annotation；禁止 Java 侧 Hilt/Dagger 注解与 kapt，测试用 Kotlin。
+- 整包导入的遗留文件保留原文件头与英文注释；新增与实质修改遵守本仓库规范，不追溯补头、不批量翻译注释；legacy 区边界与导入 ADR 待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
 - 代码注释统一使用中文，只写“为什么”和非显而易见的约束，不复述代码：
   - 必须注释：业务规则与状态流转前提、协程取消与重试等易错约束、跨层隐式约定、SQL 口径、迁移与安全限制。
   - 公共 API 的契约（参数含义、返回值、异常）需要说明时使用 KDoc；其余使用 `//` 放在被说明代码的上方。
-  - 禁止逐行注释、禁止只复述代码行为的注释、禁止保留英文行内注释；注释随代码同步修改，过期注释按缺陷处理。
+  - 禁止逐行注释、禁止只复述代码行为的注释、禁止在本仓库新写英文行内注释（整包导入的遗留文件除外）；注释随代码同步修改，过期注释按缺陷处理。
 
 ## 4. 标准阅读路径与页面模板
 
@@ -242,20 +247,21 @@ sealed interface InboundOrderDetailEffect {
 ## 10. 测试与验证
 
 - 已接入：JUnit4 + `kotlinx-coroutines-test` + Turbine + MockWebServer（本地）、Robolectric + Compose UI Test（本地 UI）、Hilt Android Testing + Room Testing（设备）、Jacoco（本地覆盖率）、Compose Preview Screenshot Testing（`com.android.compose.screenshot` 插件）、GitHub Actions CI。
-- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、记住凭据的保存/清除/失败降级与登录页回填、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片；LoginScreen 的 Robolectric 渲染与交互；设备侧 StockDao / CatalogDao 的 SQL 口径、外键级联与 upsert、AppDatabase v1 schema 校验、凭据密文落盘与清除、SessionGate 的登录失败与会话切换（Hilt `@BindValue` 替换数据层）；Login / Home / Inventory / Documents / Profile 五个页面在九种窗口尺寸、空态、错误态与 1.5 倍字体下的截图基准。
+- 已覆盖：错误映射、Stock 语义、Home / Inventory / Login / Profile / SessionGate ViewModel 的状态与重试、AuthRepository 登录与登出、记住凭据的保存/清除/失败降级与登录页回填、DefaultSessionCleaner 串行清理、Logcat 超长日志的 UTF-8 字节分片；LoginScreen 的 Robolectric 渲染与交互；设备侧 StockDao / CatalogDao 的 SQL 口径、外键级联与 upsert、AppDatabase v1 schema 校验、凭据密文落盘与清除、SessionGate 的登录失败与会话切换（Hilt `@BindValue` 替换数据层）；Login / Home / Inventory / Documents / Profile 五个页面在九种窗口尺寸、空态、错误态与 1.5 倍字体下的截图基准；Java/XML 兼容探针（debug 手写 Java 类 + layout，由 Robolectric 测试调用并 inflate）。
 - 未接入：ktlint、detekt。
 - 测试分层：
-  - `src/test`：纯 JVM 单元测试与 Robolectric Compose 测试；Robolectric 的 `android-all-instrumented` 由 `:app:syncRobolectricDependencies` 预先同步到 `app/build/robolectric-deps`，测试进程不联网下载。
+  - `src/test`（含仅 debug 变体的 `src/testDebug`）：纯 JVM 单元测试与 Robolectric Compose 测试；Robolectric 的 `android-all-instrumented` 由 `:app:syncRobolectricDependencies` 预先同步到 `app/build/robolectric-deps`，测试进程不联网下载。
   - `src/androidTest`：真实 SQLite 的 Room DAO / migration 测试与 Hilt 注入的 Compose 设备测试；测试方法名禁止含空格，DEX 038 不接受该类名。
   - `src/screenshotTest`：Layoutlib 渲染的 Compose 截图测试，基准图存放在 `app/src/screenshotTestDebug/reference/`；Preview 名称不要包含小数点，否则基准图文件名会退化为哈希值。
 - 必须测试：ViewModel 状态转换（Loading → Content/Empty/Error、Submit 成功/失败、重试）、mapper、错误映射、DAO 与 migration、同步逻辑。
 - Compose UI 测试只覆盖关键路径：登录、入库提交、盘点审核。
 - 截图测试使用 `com.android.compose.screenshot` 插件，需同时开启 `gradle.properties` 与模块 `experimentalProperties` 中的 `android.experimental.enableScreenshotTest`，插件转正后移除这两个开关；新增或修改 Screen 的视觉行为后必须重新生成并提交基准图。
 - 截图基准只在 macOS 上生成与校验，不纳入 Linux CI：Layoutlib 的字体与光栅化跨平台不一致，混跑会产生大量误报；如需在 CI 校验，必须改用同一平台（如固定的 Linux 容器）重新生成全部基准图。
-- 当前可用命令（2026-10-25 已实际执行）：
+- 当前可用命令（2026-10-26 复跑构建、单元测试、Lint 与 release 单测编译；截图、设备测试与覆盖率命令为 2026-10-25 记录）：
   - `./gradlew :app:assembleDebug`
   - `./gradlew :app:lintDebug`
-  - `./gradlew :app:testDebugUnitTest`（70 个用例）
+  - `./gradlew :app:testDebugUnitTest`（71 个用例）
+  - `./gradlew :app:compileReleaseUnitTestKotlin`（验证 release 单测编译不受 debug 专属测试影响）
   - `./gradlew :app:validateDebugScreenshotTest`（60 张基准图，本地 Layoutlib）
   - `./gradlew :app:updateDebugScreenshotTest`（有意变更 UI 后更新基准图）
   - `./gradlew :app:connectedDebugAndroidTest`（16 个用例，需连接设备或模拟器）
@@ -277,7 +283,7 @@ sealed interface InboundOrderDetailEffect {
 - 修改 Compose UI 时，保证 Screen 可独立 Preview，并优先将业务逻辑移出 Composable。
 - 交付报告包含：修改文件、行为变化、执行过的验证、未执行检查及原因。
 - 不得声称已通过尚未接入的检查或测试。
-- AI 新建或修改 Kotlin 文件时必须遵守第 3 节的文件头与中文注释规则；不得为凑数逐行注释。
+- AI 新建或修改 Kotlin/Java 文件时必须遵守第 3 节的文件头与中文注释规则；不得为凑数逐行注释。
 - 术语变更同步更新 `GLOSSARY.md`；产生难回退决策时新增 ADR，而不是把原因埋进代码注释。
 
 ## 12. 文档维护
