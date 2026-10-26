@@ -8,12 +8,12 @@
 WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、出库、盘点，服务管理员与仓管员。
 
 - 架构：单 `:app` 模块，MVVM + UiState；阅读路径固定为 `Route → Screen → UiState/Action/Effect → ViewModel → Repository`。
-- MVP 范围：登录与角色、商品/SKU、仓库与库位、库存查询、入库单、出库单、盘点单。
+- MVP 范围：登录与角色、商品/SKU、仓库与库位、库存查询、入库单、出库单、盘点单、小票打印、清点发货。
 - 角色权限：Admin 拥有全部操作权限，并可作废单据、审核盘点、维护基础资料；Operator 只能创建与执行入库、出库、盘点录入，不能作废或审核。UI 隐藏无权限操作，服务端仍必须校验。
 - 单据状态：入库/出库为 `Draft → Pending → Completed / Cancelled`；盘点为 `Draft → Counting → PendingReview → Completed / Cancelled`。现存量只在 Completed 时变更（出库在 Pending 先占用锁定量），Completed 后不可编辑；作废不改变现存量，出库作废释放锁定量。
 - 明确非目标：离线写队列、批次/序列号/保质期、单位换算、供应商/采购/报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
 - 当前阶段：登录链路完成，登录页支持记住账号密码（Keystore 加密保存，仅回填表单，不自动登录）。Home / Inventory 已打通 Room 只读路径；Documents 为无业务数据的入口页；Profile 展示当前登录用户并支持退出登录。认证使用 WanAndroid 开放 API 作为可替换的临时认证源，由 `AuthRepository` 隔离。单据、同步与业务写操作尚未实现。
-- 未来规划：以源码并入方式接入遗留模块（打印小票、清点发货），尚未实现；导入前必须先写 ADR，边界与待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
+- 遗留模块：小票打印与清点发货属于首期 MVP 的核心业务流程，旧项目已完成实现，后续以 Java/Kotlin/XML 源码并入方式迁移并少量适配；迁移前必须先完成 ADR（宿主、会话与返回栈、构建能力），边界与待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
 
 ## 2. 技术栈与版本策略
 
@@ -76,7 +76,7 @@ com.wangxingxing.wxxstoremanage
 - `description` 使用中文，说明该文件的职责与边界；只有存在非显而易见的约束时才补充“注意：…”，不得只重复类名或包名。
 - 触碰到的本仓库旧 Kotlin 文件若缺少文件头，应在本次变更中补齐；整包导入的遗留文件保留原文件头，见下方规则。
 - 手写 Java 遵守同一文件头、中文注释与 Java 17；空安全使用 androidx.annotation；禁止 Java 侧 Hilt/Dagger 注解与 kapt，测试用 Kotlin。
-- 整包导入的遗留文件保留原文件头与英文注释；新增与实质修改遵守本仓库规范，不追溯补头、不批量翻译注释；legacy 区边界与导入 ADR 待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
+- 整包导入的遗留文件保留原文件头与英文注释；新增与实质修改遵守本仓库规范，不追溯补头、不批量翻译注释；legacy 区边界与迁移 ADR 待决项见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
 - 代码注释统一使用中文，只写“为什么”和非显而易见的约束，不复述代码：
   - 必须注释：业务规则与状态流转前提、协程取消与重试等易错约束、跨层隐式约定、SQL 口径、迁移与安全限制。
   - 公共 API 的契约（参数含义、返回值、异常）需要说明时使用 KDoc；其余使用 `//` 放在被说明代码的上方。

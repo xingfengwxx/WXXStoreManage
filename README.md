@@ -1,8 +1,8 @@
 # WXXStoreManage
 
-多仓库仓储管理 Android App，面向管理员（Admin）与仓管员（Operator），业务范围覆盖多仓库、SKU 库存、入库、出库与盘点。
+多仓库仓储管理 Android App，面向管理员（Admin）与仓管员（Operator），业务范围覆盖多仓库、SKU 库存、入库、出库、盘点，以及从旧项目迁入的小票打印与清点发货。
 
-当前处于 MVP 起步阶段：登录与会话链路、Room 只读数据路径、底部四个一级页已落地；库存同步、单据流程与角色授权尚未实现。
+当前处于 MVP 起步阶段：登录与会话链路、Room 只读数据路径、底部四个一级页已落地；库存同步、单据流程与角色授权尚未实现；小票打印与清点发货属于首期核心流程，待从旧项目迁入。
 
 > 本文档描述 2026-10-26 的代码现状，只负责架构导读。开发约束与验证状态以 [AGENTS.md](AGENTS.md) 为准，业务术语以 [GLOSSARY.md](GLOSSARY.md) 为准，关键取舍见 [docs/adr](docs/adr/)。
 
@@ -17,6 +17,7 @@
 | 库存变更时机 | 入库 / 出库在 `Completed` 变更现存量；出库在 `Pending` 先占用锁定量；作废不改变现存量 |
 | 读模型 | Room 为唯一数据源，网络同步只写 Room，页面观察 Repository 暴露的 `Flow` |
 | 写模型 | 在线优先，必须等待服务端确认；MVP 不做乐观库存更新与离线写队列 |
+| 遗留模块 | 小票打印与清点发货属首期 MVP，沿用旧项目已完成的流程，以源码并入后少量适配；迁移前以 ADR 固定宿主、会话与构建能力 |
 
 明确的非目标：离线写队列、批次 / 序列号 / 保质期、单位换算、供应商 / 采购 / 报表、扫码、多语言、平板双栏、WorkManager 定时同步、动态取色。
 
@@ -36,7 +37,7 @@
 
 依赖注入与 Room 统一使用 KSP，不使用 kapt。所有版本集中声明在 [gradle/libs.versions.toml](gradle/libs.versions.toml)。
 
-默认实现仍为 Kotlin+Compose；保留手写 Java 源码与 XML 资源/layout 编译能力，遗留模块源码并入区与边界见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。
+默认实现仍为 Kotlin+Compose；保留手写 Java 源码与 XML 资源/layout 编译能力，遗留模块源码并入区与边界见 [legacy/README.md](app/src/main/java/com/wangxingxing/wxxstoremanage/legacy/README.md)。小票打印与清点发货为首期核心流程，按该区的迁移规则接入。
 
 当前**未接入**：Paging 3、WorkManager、ktlint、detekt。Paging 3 只计划用于库存与三类单据列表。
 
@@ -293,8 +294,9 @@ WANANDROID_BASE_URL=https://wanandroid.com/
 
 ## 12. 后续方向
 
-1. 实现单据领域：入库、出库、盘点的列表与详情，状态流转与在线提交。
-2. 接入库存同步：启动、进入页面与手动刷新，网络结果写入 Room，失败保留旧数据。
-3. 接入 Paging 3：库存列表与三类单据列表使用 `RemoteMediator + Room PagingSource`。
-4. 实现角色授权：Admin 作废 / 审核 / 基础资料维护，Operator 仅执行录入；UI 隐藏与服务端校验并行。
-5. 接入稳定后端后移除 WanAndroid 临时认证源与 Reqable 调试依赖。
+1. 迁入小票打印与清点发货：按 legacy 迁移规则先写 ADR，再整包搬入旧项目源码并少量适配。
+2. 实现单据领域：入库、出库、盘点的列表与详情，状态流转与在线提交。
+3. 接入库存同步：启动、进入页面与手动刷新，网络结果写入 Room，失败保留旧数据。
+4. 接入 Paging 3：库存列表与三类单据列表使用 `RemoteMediator + Room PagingSource`。
+5. 实现角色授权：Admin 作废 / 审核 / 基础资料维护，Operator 仅执行录入；UI 隐藏与服务端校验并行。
+6. 接入稳定后端后移除 WanAndroid 临时认证源与 Reqable 调试依赖。
