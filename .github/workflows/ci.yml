@@ -43,15 +43,20 @@ jobs:
           cat gradle-build.log
           exit $status
 
-      # Actions 日志需要登录才能下载，把 Gradle 的失败摘要发布为注解后，公开 API 即可读到失败原因。
+      # Actions 日志需要登录才能下载；注解每步只保留前 10 条，因此把摘要合并成单条再发布。
       - name: 输出构建失败原因
         if: failure()
         run: |
           {
-            sed -n '/What went wrong/,$p' gradle-build.log | head -30
-            echo '--- 解析与网络线索 ---'
-            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" gradle-build.log | head -15
-          } | awk 'NF' | while IFS= read -r line; do
+            sed -n '/What went wrong/,$p' gradle-build.log | head -40
+            echo "--- 网络线索 ---"
+            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" gradle-build.log | head -10
+            echo "--- runner 探测 KSP 2.3.12 marker ---"
+            for host in "https://repo1.maven.org/maven2" "https://plugins.gradle.org/m2" "https://dl.google.com/dl/android/maven2" "https://maven.aliyun.com/repository/gradle-plugin"; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' -m 20 "$host/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/2.3.12/com.google.devtools.ksp.gradle.plugin-2.3.12.pom" || echo curl-failed)
+              echo "$host -> $code"
+            done
+          } | awk 'NF' | paste -sd'|' - | while IFS= read -r line; do
             echo "::error::$line"
           done
 
