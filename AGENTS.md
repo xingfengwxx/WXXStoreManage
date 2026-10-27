@@ -268,7 +268,7 @@ sealed interface InboundOrderDetailEffect {
   - `./gradlew :app:updateDebugScreenshotTest`（有意变更 UI 后更新基准图）
   - `./gradlew :app:connectedDebugAndroidTest`（16 个用例，需连接设备或模拟器）
   - `./gradlew :app:jacocoTestReport`（覆盖率报告：`app/build/reports/jacoco/jacocoTestReport`）
-- CI 配置为 `.github/workflows/ci.yml`：构建、Lint、单元测试与覆盖率在 Ubuntu 上执行，connectedDebugAndroidTest 在 CI 模拟器上执行；截图测试仅本地执行。该工作流已落盘但尚未在 GitHub Actions 实际运行，首次推送后需确认结果。新增门禁后必须在此更新命令与状态。
+- CI 配置为 `.github/workflows/ci.yml`：构建、Lint、单元测试与覆盖率在 Ubuntu 上执行，connectedDebugAndroidTest 在 CI 模拟器（API 35 AOSP x86_64、4 核、关闭动画与拼写检查、启动超时 20 分钟）上执行；截图测试仅本地执行。2026-10-27 首次实际运行并全绿（run 40496674794，设备测试步骤约 23 分钟）。失败时工作流会把 Gradle 摘要合并成单条 Actions 注解，公开仓库可用 `GET /repos/{owner}/{repo}/check-runs/{id}/annotations` 免登录读取。新增门禁后必须在此更新命令与状态。
 - 交付必须给出实际执行过的命令与结果；未执行的检查写明原因，不得虚构通过。
 
 ## 11. AI-Generated Code Requirements
