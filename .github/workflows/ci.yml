@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # 支持手动重跑：模拟器与网络偶发波动时不必再推空提交。
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
