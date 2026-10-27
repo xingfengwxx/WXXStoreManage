@@ -47,10 +47,12 @@ jobs:
       - name: 输出构建失败原因
         if: failure()
         run: |
-          BLOCK="$(sed -n '/What went wrong/,/^\* Try:/p' gradle-build.log | head -12)"
-          if [ -z "$BLOCK" ]; then BLOCK="$(tail -12 gradle-build.log)"; fi
-          printf '%s\n' "$BLOCK" | while IFS= read -r line; do
-            [ -n "$line" ] && echo "::error::$line"
+          {
+            sed -n '/What went wrong/,$p' gradle-build.log | head -30
+            echo '--- 解析与网络线索 ---'
+            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" gradle-build.log | head -15
+          } | awk 'NF' | while IFS= read -r line; do
+            echo "::error::$line"
           done
 
       - name: Lint
@@ -114,10 +116,14 @@ jobs:
       - name: 输出设备测试失败原因
         if: failure()
         run: |
-          BLOCK="$(sed -n '/What went wrong/,/^\* Try:/p' android-test.log 2>/dev/null | head -12)"
-          if [ -z "$BLOCK" ]; then BLOCK="$(tail -12 android-test.log 2>/dev/null)"; fi
-          printf '%s\n' "$BLOCK" | while IFS= read -r line; do
-            [ -n "$line" ] && echo "::error::$line"
+          {
+            sed -n '/What went wrong/,$p' android-test.log 2>/dev/null | head -30
+            echo '--- 解析与网络线索 ---'
+            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" android-test.log 2>/dev/null | head -15
+            echo '--- 日志末尾 ---'
+            tail -5 android-test.log 2>/dev/null
+          } | awk 'NF' | while IFS= read -r line; do
+            echo "::error::$line"
           done
 
       - name: 上传设备测试报告
