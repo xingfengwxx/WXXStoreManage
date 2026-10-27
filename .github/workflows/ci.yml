@@ -28,6 +28,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # 先单独输出 JDK 与 --version 中的 Daemon JVM 行：daemon JVM 要求与 CI 安装的 JDK 不匹配时，
+      # Gradle 会在任何任务开始前就失败，这行信息是唯一能直接定位该问题的证据。
+      - name: 输出构建环境信息
+        run: |
+          java -version
+          ./gradlew --version
+
       - name: 编译 Debug
         run: ./gradlew :app:assembleDebug --stacktrace
 
@@ -61,6 +68,11 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: 输出构建环境信息
+        run: |
+          java -version
+          ./gradlew --version
 
       - name: 启用 KVM
         run: |

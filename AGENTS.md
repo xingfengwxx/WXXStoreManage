@@ -22,6 +22,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - Hilt 与 Room 统一使用 KSP，禁止 kapt。
 - 路由使用 kotlinx-serialization；Nav3 的 ViewModel 作用域使用 `lifecycle-viewmodel-navigation3`。
 - Java 17；minSdk 24；compileSdk/targetSdk 37。
+- Gradle daemon JVM 由 `gradle/gradle-daemon-jvm.properties` 固定为 Java 17，本地与 CI 的 `setup-java` 必须安装同一版本：该文件要求的版本高于机器可用 JDK 时，Gradle 会在任何任务开始前直接失败（`Cannot find a Java installation ...`），不会进入配置阶段；修改该文件需同步 `.github/workflows/ci.yml` 的 `java-version`。
 - 保留 Java 源码与 XML 资源/layout 编译能力，禁止排除 `java`/`res` 源集或关闭资源编译；ViewBinding 按需开启，DataBinding 不引入。
 - AGP 固定在 9.4.0（Android Studio 2026.2 支持上限）；截图测试因此使用 `com.android.compose.screenshot` 插件，AGP 9.5+ 的内置测试套件不可用。
 - 所有版本只写在 `gradle/libs.versions.toml`。禁止硬编码版本、动态版本、`+` 与 SNAPSHOT。
