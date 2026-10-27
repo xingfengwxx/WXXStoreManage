@@ -36,7 +36,22 @@ jobs:
           ./gradlew --version
 
       - name: 编译 Debug
-        run: ./gradlew :app:assembleDebug --stacktrace
+        run: |
+          set +e
+          ./gradlew :app:assembleDebug --stacktrace > gradle-build.log 2>&1
+          status=$?
+          cat gradle-build.log
+          exit $status
+
+      # Actions 日志需要登录才能下载，把 Gradle 的失败摘要发布为注解后，公开 API 即可读到失败原因。
+      - name: 输出构建失败原因
+        if: failure()
+        run: |
+          BLOCK="$(sed -n '/What went wrong/,/^\* Try:/p' gradle-build.log | head -12)"
+          if [ -z "$BLOCK" ]; then BLOCK="$(tail -12 gradle-build.log)"; fi
+          printf '%s\n' "$BLOCK" | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
@@ -89,7 +104,21 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest --stacktrace
+          script: |
+            set +e
+            ./gradlew :app:connectedDebugAndroidTest --stacktrace > android-test.log 2>&1
+            status=$?
+            cat android-test.log
+            exit $status
+
+      - name: 输出设备测试失败原因
+        if: failure()
+        run: |
+          BLOCK="$(sed -n '/What went wrong/,/^\* Try:/p' android-test.log 2>/dev/null | head -12)"
+          if [ -z "$BLOCK" ]; then BLOCK="$(tail -12 android-test.log 2>/dev/null)"; fi
+          printf '%s\n' "$BLOCK" | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
 
       - name: 上传设备测试报告
         if: always()
