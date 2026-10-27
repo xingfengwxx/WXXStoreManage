@@ -112,6 +112,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          # 不保存快照：AVD 每次都是新建的，退出时保存快照只会拖长任务时间。
+          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
           script: |
             set +e
             ./gradlew :app:connectedDebugAndroidTest --stacktrace > android-test.log 2>&1
@@ -123,9 +125,11 @@ jobs:
         if: failure()
         run: |
           {
-            sed -n '/What went wrong/,$p' android-test.log 2>/dev/null | head -30
-            echo '--- 解析与网络线索 ---'
-            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" android-test.log 2>/dev/null | head -10
+            sed -n '/What went wrong/,$p' android-test.log 2>/dev/null | head -6
+            echo '--- 失败用例 ---'
+            grep -E "FAILED|tests completed|Starting [0-9]+ tests|Test run failed|INSTRUMENTATION_|AssertionError|Process crashed" android-test.log 2>/dev/null | head -20
+            echo '--- 结果 XML 中的失败信息 ---'
+            find app/build/outputs/androidTest-results -name '*.xml' -exec grep -h -A3 -E '<failure|<error' {} + 2>/dev/null | head -20
             echo '--- 日志末尾 ---'
             tail -5 android-test.log 2>/dev/null
           } | awk 'NF' | paste -sd'|' - | while IFS= read -r line; do
