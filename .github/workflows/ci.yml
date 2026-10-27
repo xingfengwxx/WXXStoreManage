@@ -35,10 +35,12 @@ jobs:
           java -version
           ./gradlew --version
 
+      # Gradle 会把“找不到某依赖”的否结果写进 modules-2 元数据缓存，setup-gradle 又会把它随 Gradle User Home
+      # 一起缓存；一旦某次运行写入错误的否结果，后续运行会在本地直接判负、根本不访问仓库。先用 refresh 强制重建。
       - name: 编译 Debug
         run: |
           set +e
-          ./gradlew :app:assembleDebug --stacktrace > gradle-build.log 2>&1
+          ./gradlew :app:assembleDebug --refresh-dependencies --stacktrace > gradle-build.log 2>&1
           status=$?
           cat gradle-build.log
           exit $status
@@ -47,6 +49,17 @@ jobs:
       - name: 输出构建失败原因
         if: failure()
         run: |
+          probe=/tmp/ksp-probe
+          mkdir -p "$probe" /tmp/ksp-probe-home/wrapper
+          printf '%s\n' 'pluginManagement { repositories { mavenCentral(); gradlePluginPortal() } }' > "$probe/settings.gradle.kts"
+          printf '%s\n' 'rootProject.name = "ksp-probe"' >> "$probe/settings.gradle.kts"
+          printf '%s\n' 'plugins { id("com.google.devtools.ksp") version "2.3.12" apply false }' > "$probe/build.gradle.kts"
+          cp -R ~/.gradle/wrapper/dists /tmp/ksp-probe-home/wrapper/ 2>/dev/null || true
+          if GRADLE_USER_HOME=/tmp/ksp-probe-home ./gradlew -p "$probe" help > /tmp/ksp-probe.log 2>&1; then
+            probe_status=0
+          else
+            probe_status=$?
+          fi
           {
             sed -n '/What went wrong/,$p' gradle-build.log | head -40
             echo "--- 网络线索 ---"
@@ -56,6 +69,9 @@ jobs:
               code=$(curl -s -o /dev/null -w '%{http_code}' -m 20 "$host/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/2.3.12/com.google.devtools.ksp.gradle.plugin-2.3.12.pom" || echo curl-failed)
               echo "$host -> $code"
             done
+            echo "--- 干净 Gradle Home 解析 KSP ---"
+            echo "exit=$probe_status"
+            grep -E "What went wrong|Could not GET|Could not find|was not found|Plugin \[id" /tmp/ksp-probe.log | head -8
           } | awk 'NF' | paste -sd'|' - | while IFS= read -r line; do
             echo "::error::$line"
           done
@@ -113,7 +129,7 @@ jobs:
           disable-animations: true
           script: |
             set +e
-            ./gradlew :app:connectedDebugAndroidTest --stacktrace > android-test.log 2>&1
+            ./gradlew :app:connectedDebugAndroidTest --refresh-dependencies --stacktrace > android-test.log 2>&1
             status=$?
             cat android-test.log
             exit $status
@@ -124,10 +140,10 @@ jobs:
           {
             sed -n '/What went wrong/,$p' android-test.log 2>/dev/null | head -30
             echo '--- 解析与网络线索 ---'
-            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" android-test.log 2>/dev/null | head -15
+            grep -E "Could not GET|Received status code|Caused by|timed out|Connection refused" android-test.log 2>/dev/null | head -10
             echo '--- 日志末尾 ---'
             tail -5 android-test.log 2>/dev/null
-          } | awk 'NF' | while IFS= read -r line; do
+          } | awk 'NF' | paste -sd'|' - | while IFS= read -r line; do
             echo "::error::$line"
           done
 
