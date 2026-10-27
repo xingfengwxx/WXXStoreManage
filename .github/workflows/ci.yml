@@ -81,7 +81,7 @@ jobs:
   instrumented:
     name: 设备测试（Room / Hilt / Compose）
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -108,12 +108,16 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
-          target: google_apis
+          # AOSP 镜像比 google_apis 小得多、启动更快，这些测试不需要 Google 服务。
+          target: default
           arch: x86_64
           profile: pixel_6
+          cores: 4
           disable-animations: true
-          # 不保存快照：AVD 每次都是新建的，退出时保存快照只会拖长任务时间。
-          emulator-options: -no-snapshot -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          # 该 action 文档把系统拼写检查列为文本框交互的常见 flaky 来源，登录用例要输入文本。
+          disable-spellchecker: true
+          # 运行器负载波动时冷启动可能超过默认 10 分钟，放宽到 20 分钟。
+          emulator-boot-timeout: 1200
           script: |
             set +e
             ./gradlew :app:connectedDebugAndroidTest --stacktrace > android-test.log 2>&1
