@@ -35,11 +35,6 @@ jobs:
           java -version
           ./gradlew --version
 
-      # setup-gradle 会整份缓存 Gradle User Home。Gradle 对“找不到依赖”的否结果有约 24 小时的缓存，
-      # 一旦历史缓存写入了错误的否结果，后续运行会在本地直接判负、不访问仓库，--refresh-dependencies 也不清除。
-      - name: 清理依赖元数据缓存
-        run: rm -rf ~/.gradle/caches/modules-2/metadata-*
-
       - name: 编译 Debug
         run: |
           set +e
@@ -49,35 +44,19 @@ jobs:
           exit $status
 
       # Actions 日志需要登录才能下载；注解每步只保留前 10 条，因此把摘要合并成单条再发布。
+      # 插件解析会把仓库 5xx 吞成“找不到插件”，所以同时用 HEAD 探测各仓库能否提供该 marker。
       - name: 输出构建失败原因
         if: failure()
         run: |
-          probe=/tmp/ksp-probe
-          mkdir -p "$probe" /tmp/home-probe/wrapper /tmp/home-real/wrapper
-          cat > "$probe/settings.gradle.kts" <<'EOF'
-          pluginManagement {
-              repositories {
-                  google { content { includeGroupByRegex("com\\.android.*"); includeGroupByRegex("com\\.google.*"); includeGroupByRegex("androidx.*") } }
-                  maven("https://maven.aliyun.com/repository/google") { content { includeGroupByRegex("com\\.android.*"); includeGroupByRegex("com\\.google.*"); includeGroupByRegex("androidx.*") } }
-                  maven("https://maven.aliyun.com/repository/gradle-plugin")
-                  maven("https://maven.aliyun.com/repository/public")
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          rootProject.name = "ksp-probe"
-          EOF
-          printf '%s\n' 'plugins { id("com.google.devtools.ksp") version "2.3.12" apply false }' > "$probe/build.gradle.kts"
-          cp -R ~/.gradle/wrapper/dists /tmp/home-probe/wrapper/ 2>/dev/null || true
-          cp -R ~/.gradle/wrapper/dists /tmp/home-real/wrapper/ 2>/dev/null || true
-          if GRADLE_USER_HOME=/tmp/home-probe ./gradlew -p "$probe" help > /tmp/p1.log 2>&1; then p1=0; else p1=$?; fi
-          if GRADLE_USER_HOME=/tmp/home-real ./gradlew help > /tmp/p2.log 2>&1; then p2=0; else p2=$?; fi
           {
             sed -n '/What went wrong/,$p' gradle-build.log | head -30
-            echo "--- 最小工程+项目仓库列表（干净 Home）exit=$p1 ---"
-            grep -E "What went wrong|Could not GET|Could not find|was not found|Received status|UnknownHost|timed out" /tmp/p1.log | head -6
-            echo "--- 真实工程（干净 Home）exit=$p2 ---"
-            grep -E "What went wrong|Could not GET|Could not find|was not found|Received status|UnknownHost|timed out" /tmp/p2.log | head -6
+            echo "--- 网络线索 ---"
+            grep -E "Could not (GET|HEAD)|Received status code|UnknownHost|timed out|Connection refused" gradle-build.log | head -10
+            echo "--- HEAD 探测 KSP marker jar ---"
+            for host in "https://repo1.maven.org/maven2" "https://plugins.gradle.org/m2" "https://dl.google.com/dl/android/maven2" "https://maven.aliyun.com/repository/gradle-plugin"; do
+              code=$(curl -s -I -o /dev/null -w '%{http_code}' -m 20 "$host/com/google/devtools/ksp/com.google.devtools.ksp.gradle.plugin/2.3.12/com.google.devtools.ksp.gradle.plugin-2.3.12.jar" || echo curl-failed)
+              echo "$host -> $code"
+            done
           } | awk 'NF' | paste -sd'|' - | while IFS= read -r line; do
             echo "::error::$line"
           done
@@ -117,10 +96,6 @@ jobs:
         run: |
           java -version
           ./gradlew --version
-
-      # 与 static-and-unit 相同的元数据缓存清理，原因见该任务中的注释。
-      - name: 清理依赖元数据缓存
-        run: rm -rf ~/.gradle/caches/modules-2/metadata-*
 
       - name: 启用 KVM
         run: |

@@ -26,6 +26,7 @@ WXXStoreManage 是 Android 仓储管理 App：多仓库、SKU 库存、入库、
 - 保留 Java 源码与 XML 资源/layout 编译能力，禁止排除 `java`/`res` 源集或关闭资源编译；ViewBinding 按需开启，DataBinding 不引入。
 - AGP 固定在 9.4.0（Android Studio 2026.2 支持上限）；截图测试因此使用 `com.android.compose.screenshot` 插件，AGP 9.5+ 的内置测试套件不可用。
 - 所有版本只写在 `gradle/libs.versions.toml`。禁止硬编码版本、动态版本、`+` 与 SNAPSHOT。
+- 仓库镜像：`settings.gradle.kts` 在存在 `CI` 环境变量时只使用 Google/Maven Central/Plugin Portal，本地保留阿里云镜像。阿里云镜像从 GitHub 海外运行器访问会返回 502，而 Gradle 的插件解析会把仓库故障吞成“找不到插件”，只报 `was not found in any of the following sources`，据此排查会误判为版本或缓存问题。
 - 新增依赖必须说明用途、替代方案与维护状态；优先 Jetpack 官方库。
 - 引入依赖后必须实际编译验证，不以“应该可以”作为结论。
 
